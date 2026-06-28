@@ -1,0 +1,25 @@
+<script>
+
+/******************************************************************************
+ * dcLibrary
+ ******************************************************************************/
+
+function dcAlert(message,title="Información"){
+
+    alert(
+        title + "\n\n" + message
+    );
+
+}
+
+function dcConfirm(message,callback,title="Confirmar"){
+
+    if(confirm(title + "\n\n" + message)){
+
+        callback();
+
+    }
+
+}
+
+</script>

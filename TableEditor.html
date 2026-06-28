@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <link rel="preconnect"
+href="https://fonts.googleapis.com">
+
+<link rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap"
+rel="stylesheet">
+  
+<style>
+
+body{
+
+font-family:Arial,sans-serif;
+
+background:white;
+
+margin:0;
+
+padding:8px;
+
+}
+
+
+button{
+
+padding:8px 12px;
+
+border-radius:6px;
+
+border:1px solid #999;
+
+background:white;
+
+cursor:pointer;
+
+margin-right:6px;
+
+}
+
+button:hover{
+
+background:#f0f0f0;
+
+}
+
+#tableContainer{
+
+    display:none;
+
+    height:70vh;
+
+    overflow:auto;
+
+    border:1px solid #ccc;
+
+    border-radius:10px;
+
+    background:white;
+
+}
+
+table{
+
+border-collapse:collapse;
+
+min-width:max-content;
+
+}
+
+th{
+
+background:#f0f0f0;
+
+position:sticky;
+
+top:0;
+
+z-index:10;
+
+}
+
+th,
+td{
+
+padding:2px 4px;
+
+}
+
+tr:nth-child(even){
+
+background:#fafafa;
+
+}
+
+thead th{
+
+    font-weight:bold;
+
+    text-align:center;
+
+    background:#f0f0f0;
+
+    padding:6px;
+
+}
+  
+input[type="text"]{
+
+    width:100%;
+
+    border:none;
+
+    outline:none;
+
+    box-sizing:border-box;
+
+    background:transparent;
+
+}
+
+.booleanCol input[type="checkbox"]{
+
+    width:16px;
+    height:16px;
+
+    display:block;
+
+    margin:auto;
+
+    cursor:pointer;
+
+}
+
+
+.booleanCol{
+
+width:28px;
+min-width:28px;
+max-width:28px;
+
+text-align:center;
+
+padding:0;
+
+}
+
+
+
+select{
+
+width:100%;
+
+border:none;
+
+outline:none;
+
+background:transparent;
+
+box-sizing:border-box;
+
+font:inherit;
+
+}
+
+.actionsCol{
+
+width:170px;
+
+min-width:170px;
+
+white-space:nowrap;
+
+}
+
+.keyCol{
+
+width:120px;
+
+min-width:120px;
+
+}
+
+.typeCol{
+
+width:120px;
+
+min-width:120px;
+
+}
+
+.commentCol{
+
+width:320px;
+
+min-width:320px;
+
+}
+
+.textCol{
+
+width:260px;
+
+min-width:260px;
+
+}
+
+.commentRow td{
+
+    background:#dff5ff;
+
+}
+
+.commentTitle{
+
+    font-weight:bold;
+
+    font-size:1.05em;
+
+    color:#234;
+
+    padding:10px 14px;
+
+    border-top:2px solid #7dc9e8;
+
+    letter-spacing:.3px;
+
+}
+  
+
+</style>
+  
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1">
+
+<title>
+Your Librarian
+</title>
+
+</head>
+
+<body>
+
+<div id="tableContainer">
+
+    <table id="grid"></table>
+
+</div>
+
+<script>
+
+let currentTable =
+"commands";
+
+let tableHeaders = [];
+
+let tableData = [];
+
+
+function loadTable(tableName){
+
+  document.getElementById("idleLogo").style.display = "none";
+document.getElementById("tableContainer").style.display = "block";
+
+    currentTable = tableName;
+
+    setStatus("Cargando...");
+
+    google.script.run
+
+        .withSuccessHandler(function(rows){
+
+            tableData = rows;
+
+            renderGrid(tableData);
+
+        })
+
+        .LoadTable(tableName);
+
+}
+
+function createEditor(columnName,value,rowIndex,colIndex){
+
+    let editor;
+
+    if(columnName==="type"){
+
+        editor = document.createElement("select");
+
+        ["COMMAND","COMMENT"].forEach(v=>{
+
+            const option = document.createElement("option");
+
+            option.value = v;
+            option.text = v;
+            option.selected = (v===value);
+
+            editor.appendChild(option);
+
+        });
+
+    }
+    else if(getColumnType(columnName)==="boolean"){
+
+        editor = document.createElement("input");
+
+        editor.type = "checkbox";
+
+        editor.checked = (value==="Y");
+
+    }
+    else{
+
+        editor = document.createElement("input");
+
+        editor.type = "text";
+
+        editor.value = value ?? "";
+
+    }
+
+    function updateData(){
+
+        tableData[rowIndex][colIndex] =
+            getEditorValue(editor);
+
+    }
+
+    editor.oninput = updateData;
+
+    editor.onchange = updateData;
+
+    return editor;
+
+}
+
+function getEditorValue(editor){
+
+    if(editor.type === "checkbox"){
+
+        return editor.checked
+            ? "Y"
+            : "N";
+
+    }
+
+    return editor.value;
+
+}
+
+function moveRow(index,direction){
+
+    const target = index + direction;
+
+    if(target < 1 || target >= tableData.length)
+        return;
+
+    const tmp = tableData[index];
+
+    tableData[index] = tableData[target];
+
+    tableData[target] = tmp;
+
+    renderGrid(tableData);
+
+}
+
+function insertRow(index){
+
+    const cols = tableHeaders.length;
+
+    const newRow = Array(cols).fill("");
+
+    tableData.splice(index+1,0,newRow);
+
+    renderGrid(tableData);
+
+}
+
+function deleteRow(index){
+
+    dcConfirm(
+
+        "¿Eliminar esta fila?",
+
+        function(){
+
+            tableData.splice(index,1);
+
+            renderGrid(tableData);
+
+        }
+
+    );
+
+}
+
+function saveTable(){
+
+    setStatus("Saving...");
+
+    google.script.run
+
+        .withSuccessHandler(function(){
+
+            setStatus("Guardado OK");
+
+            setTimeout(function(){
+
+                setStatus("Listo");
+
+            },2000);
+
+        })
+
+        .withFailureHandler(function(err){
+
+            setStatus("ERROR: "+err.message);
+
+        })
+
+        .SaveTable(
+
+            currentTable,
+
+            tableData
+
+        );
+
+}
+
+function createActionButtons(rowIndex){
+
+    const td = document.createElement("td");
+
+    td.className = "actionsCol";
+
+    td.innerHTML =
+        '<button onclick="moveRow('+rowIndex+',-1)">↑</button> '+
+        '<button onclick="moveRow('+rowIndex+',1)">↓</button> '+
+        '<button onclick="insertRow('+rowIndex+')">+</button> '+
+        '<button onclick="deleteRow('+rowIndex+')">🗑</button>';
+
+    return td;
+
+}
+
+function getCommentTitle(row,idx){
+
+    if(idx.brief>=0)
+        return row[idx.brief] || "";
+
+    if(idx.value>=0)
+        return row[idx.value] || "";
+
+    if(idx.comment>=0)
+        return row[idx.comment] || "";
+
+    return "";
+
+}
+
+function getColumnType(columnName){
+
+    switch(columnName){
+
+        case "canSuperUser":
+        case "canAdmin":
+        case "canUploader":
+        case "canUser":
+            return "boolean";
+
+        case "type":
+            return "enum";
+
+        default:
+            return "text";
+
+    }
+
+}
+
+function getColumnClass(columnName){
+
+    switch(columnName){
+
+        case "command":
+        case "key":
+            return "keyCol";
+
+        case "type":
+            return "typeCol";
+
+        case "comment":
+            return "commentCol";
+
+        default:
+
+            if(getColumnType(columnName)==="boolean")
+                return "booleanCol";
+
+            return "textCol";
+
+    }
+
+}
+
+function getColumnTitle(columnName){
+
+    switch(columnName){
+
+        case "canSuperUser":
+            return "SU";
+
+        case "canAdmin":
+            return "AD";
+
+        case "canUploader":
+            return "UL";
+
+        case "canUser":
+            return "US";
+
+        default:
+            return columnName;
+
+    }
+
+}
+
+function renderHeader(headers, thead){
+
+    const headerRow = document.createElement("tr");
+
+    const actionsHeader = document.createElement("th");
+
+    actionsHeader.className = "actionsCol";
+    actionsHeader.textContent = "Acciones";
+
+    headerRow.appendChild(actionsHeader);
+
+    headers.forEach(columnName=>{
+
+        const th = document.createElement("th");
+
+        th.className =
+            getColumnClass(columnName);
+
+        th.textContent =
+            getColumnTitle(columnName);
+
+        headerRow.appendChild(th);
+
+    });
+
+    thead.appendChild(headerRow);
+
+}
+  
+function renderDataRow(row,rowIndex,headers,tbody){
+
+    const tr = document.createElement("tr");
+
+    tr.appendChild(
+        createActionButtons(rowIndex)
+    );
+
+    headers.forEach((columnName,colIndex)=>{
+
+        const td = document.createElement("td");
+
+        td.className =
+            getColumnClass(columnName);
+
+        td.appendChild(
+
+            createEditor(
+
+              columnName,
+          
+              row[colIndex] ?? "",
+          
+              rowIndex,
+          
+              colIndex
+          
+          )
+
+        );
+
+        tr.appendChild(td);
+
+    });
+
+    tbody.appendChild(tr);
+
+}
+
+function renderCommentRow(row,rowIndex,headers,idx,tbody){
+
+    const tr = document.createElement("tr");
+
+    tr.className = "commentRow";
+
+    tr.appendChild(
+        createActionButtons(rowIndex)
+    );
+
+    const td = document.createElement("td");
+
+    td.colSpan = headers.length;
+
+    td.className = "commentTitle";
+
+    td.textContent =
+        getCommentTitle(row,idx);
+
+    tr.appendChild(td);
+
+    tbody.appendChild(tr);
+
+}
+  
+function renderGrid(rows){
+
+    tableHeaders = [...rows[0]];
+
+    const headers = tableHeaders;
+
+    const idx = {
+
+        type    : headers.indexOf("type"),
+        brief   : headers.indexOf("brief"),
+        comment : headers.indexOf("comment"),
+        value   : headers.indexOf("value")
+
+    };
+
+    const table = document.getElementById("grid");
+
+    table.innerHTML = "";
+
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+
+    renderHeader(
+    headers,
+    thead
+);
+
+    for(let rowIndex=1; rowIndex<rows.length; rowIndex++){
+
+        const row = rows[rowIndex];
+
+        if(idx.type>=0 && row[idx.type]==="COMMENT"){
+
+            renderCommentRow(
+                row,
+                rowIndex,
+                headers,
+                idx,
+                tbody
+            );
+
+            continue;
+
+        }
+
+        renderDataRow(
+            row,
+            rowIndex,
+            headers,
+            tbody
+        );
+
+    }
+
+    setStatus(
+        "Tabla cargada: " +
+        currentTable.toUpperCase()
+    );
+
+}
+
+  
+</script>
+
+</body>
+
+</html>

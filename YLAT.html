@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <link rel="preconnect"
+href="https://fonts.googleapis.com">
+
+<link rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap"
+rel="stylesheet">
+  
+<style>
+
+body{
+
+font-family:Arial,sans-serif;
+
+background:white;
+
+margin:0;
+
+padding:8px;
+
+}
+
+#header{
+
+background:
+rgb(140,230,255);
+
+border-radius:10px;
+
+padding:10px;
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+margin-bottom:8px;
+
+}
+
+#logo{
+
+width:72px;
+
+height:72px;
+
+object-fit:contain;
+
+background:white;
+
+border-radius:50%;
+
+border:1px solid #999;
+
+padding:2px;
+
+flex-shrink:0;
+
+}
+
+#title{
+
+font-family:
+'Tangerine',
+cursive;
+
+font-size:46px;
+
+font-weight:700;
+
+line-height:0.9;
+
+color:#222;
+
+}
+  
+#subtitle{
+
+font-size:13px;
+
+color:#444;
+
+letter-spacing:1px;
+
+margin-top:2px;
+
+}
+
+#titleBlock{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+#title{
+  font-family:'Tangerine',cursive;
+  font-size:46px;
+  font-weight:700;
+  line-height:0.9;
+  text-align:center;
+}
+
+#subtitle{
+  text-align:center;
+  margin-top:0;
+  font-size:13px;
+  letter-spacing:1px;
+}
+
+#toolbar{
+
+background:
+rgb(140,230,255);
+
+border-radius:10px;
+
+padding:8px;
+
+margin-bottom:8px;
+
+}
+
+#mainToolbar{
+
+    background:rgb(140,230,255);
+
+    border-radius:10px;
+
+    padding:8px;
+
+    margin-bottom:4px;
+
+}
+
+#contextToolbar{
+
+    background:rgb(220,245,255);
+
+    border-radius:10px;
+
+    padding:8px;
+
+    margin-bottom:8px;
+
+}
+
+
+#contextToolbar{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    flex-wrap:wrap;
+
+}
+
+#workArea{
+
+    min-height:70vh;
+
+    position:relative;
+
+}
+
+#idleLogo{
+
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    pointer-events:none;
+
+    z-index:10;      /* antes era 0 */
+}
+
+#idleLogo img{
+
+    width:500px;
+
+    opacity:.25;  /*  .08  muy tenue   
+                      .15  tenue        */
+}
+
+
+#tableContainer{
+
+    position:relative;
+
+    z-index:1;
+
+}
+
+
+button{
+
+padding:8px 12px;
+
+border-radius:6px;
+
+border:1px solid #999;
+
+background:white;
+
+cursor:pointer;
+
+margin-right:6px;
+
+}
+
+button:hover{
+
+background:#f0f0f0;
+
+}
+
+#tableContainer{
+
+height:70vh;
+
+overflow:auto;
+
+border:1px solid #ccc;
+
+border-radius:10px;
+
+background:white;
+
+}
+
+table{
+
+border-collapse:collapse;
+
+min-width:max-content;
+
+}
+
+th{
+
+background:#f0f0f0;
+
+position:sticky;
+
+top:0;
+
+z-index:10;
+
+}
+
+th,
+td{
+
+padding:2px 4px;
+
+}
+
+tr:nth-child(even){
+
+background:#fafafa;
+
+}
+
+thead th{
+
+    font-weight:bold;
+
+    text-align:center;
+
+    background:#f0f0f0;
+
+    padding:6px;
+
+}
+  
+input[type="text"]{
+
+    width:100%;
+
+    border:none;
+
+    outline:none;
+
+    box-sizing:border-box;
+
+    background:transparent;
+
+}
+
+.booleanCol input[type="checkbox"]{
+
+    width:16px;
+    height:16px;
+
+    display:block;
+
+    margin:auto;
+
+    cursor:pointer;
+
+}
+
+#footer{
+
+background:
+rgb(140,230,255);
+
+border-radius:10px;
+
+padding:10px;
+
+margin-top:8px;
+
+font-weight:bold;
+
+}
+
+.booleanCol{
+
+width:28px;
+min-width:28px;
+max-width:28px;
+
+text-align:center;
+
+padding:0;
+
+}
+
+
+
+select{
+
+width:100%;
+
+border:none;
+
+outline:none;
+
+background:transparent;
+
+box-sizing:border-box;
+
+font:inherit;
+
+}
+
+.actionsCol{
+
+width:170px;
+
+min-width:170px;
+
+white-space:nowrap;
+
+}
+
+.keyCol{
+
+width:120px;
+
+min-width:120px;
+
+}
+
+.typeCol{
+
+width:120px;
+
+min-width:120px;
+
+}
+
+.commentCol{
+
+width:320px;
+
+min-width:320px;
+
+}
+
+.textCol{
+
+width:260px;
+
+min-width:260px;
+
+}
+
+.commentRow td{
+
+    background:#dff5ff;
+
+}
+
+.commentTitle{
+
+    font-weight:bold;
+
+    font-size:1.05em;
+
+    color:#234;
+
+    padding:10px 14px;
+
+    border-top:2px solid #7dc9e8;
+
+    letter-spacing:.3px;
+
+}
+  
+
+</style>
+  
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1">
+
+<title>
+Your Librarian
+</title>
+
+</head>
+
+<body>
+
+<div id="header">
+
+<img
+id="logo"
+src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w200"
+  >
+
+<div id="titleBlock">
+
+<div id="title">
+Your Librarian
+</div>
+
+<div id="subtitle">
+      Administration Tool
+</div>
+
+</div>
+
+</div>
+
+<div id="mainToolbar">
+
+    <button onclick="showTables()">
+        Tablas
+    </button>
+
+    <button onclick="showTools()">
+        Herramientas
+    </button>
+
+</div>
+
+<div id="contextToolbar">
+
+</div>
+
+<div id="workArea">
+
+    <div id="idleLogo">
+
+        <img src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w400">
+
+    </div>
+
+    <?!= include('TableEditor'); ?>
+
+</div>
+
+<div id="footer">
+
+<span id="status">
+Listo
+</span>
+
+</div>
+
+<?!= include('dcLibrary'); ?>
+
+<script>
+
+
+const VERSION = {
+
+    product : "YLAT",
+
+    version : "1.0",
+
+    build   : 2
+
+};
+
+
+function setStatus(
+msg
+){
+
+document
+
+.getElementById(
+"status"
+)
+
+.innerText =
+msg;
+
+}
+
+function showTables(){
+
+    document.getElementById("contextToolbar").innerHTML =
+
+        '<button onclick="loadTable(\'config\')">CONFIG</button>' +
+
+        '<button onclick="loadTable(\'commands\')">COMMANDS</button>' +
+
+        '<button onclick="loadTable(\'users\')">USERS</button>' +
+
+        '<button onclick="loadTable(\'catalog\')">CATALOG</button>' +
+
+        '<button style="margin-left:auto" onclick="saveTable()">Guardar</button>';
+
+}
+
+function showTools(){
+
+    document.getElementById("contextToolbar").innerHTML =
+        '<button onclick="showHelpEditor()">Editor de Ayuda</button>';
+
+    document.getElementById("idleLogo").style.display = "flex";
+
+    document.getElementById("tableContainer").style.display = "none";
+}
+
+function showIdle(){
+
+    document.getElementById("workArea").innerHTML =
+
+        '<div style="height:70vh;display:flex;justify-content:center;align-items:center;">'+
+
+        '<img '+
+
+        'src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w400" '+
+
+        'style="width:320px;opacity:.08;">'+
+
+        '</div>';
+
+}
+
+function showHelpEditor(){
+
+    document
+        .getElementById("workArea")
+        .innerHTML =
+
+        "<h2>Editor de Ayuda</h2>" +
+
+        "<p>Próximamente...</p>";
+
+}
+
+function showTableEditor(){
+
+    document.getElementById("workArea").innerHTML =
+
+        document.getElementById("tableEditorTemplate").innerHTML;
+
+}
+  
+</script>
+
+</body>
+
+</html>
