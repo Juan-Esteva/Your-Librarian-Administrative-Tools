@@ -1,0 +1,196 @@
+<div id="helpContainer" style="display:none;height:70vh;">
+
+<style>
+
+#helpLayout{
+    display:flex;
+    height:100%;
+    border:1px solid #ccc;
+    border-radius:10px;
+    overflow:hidden;
+    background:white;
+}
+
+#helpCommands{
+
+    width:220px;
+
+    border-right:1px solid #ddd;
+
+    overflow-y:auto;
+
+    background:#fafafa;
+
+}
+
+#helpCommandsHeader{
+
+    padding:10px;
+
+    font-weight:bold;
+
+    background:#f0f0f0;
+
+    border-bottom:1px solid #ddd;
+
+}
+
+#helpCommandsList{
+
+    padding:0;
+
+    margin:0;
+
+}
+
+.helpCommand{
+
+    padding:8px 12px;
+
+    cursor:pointer;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.helpCommand:hover{
+
+    background:#dff5ff;
+
+}
+
+.helpCommand.selected{
+
+    background:#8ce6ff;
+
+    font-weight:bold;
+
+}
+
+#helpEditorArea{
+
+    flex:1;
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+#helpToolbar{
+
+    padding:8px;
+
+    border-bottom:1px solid #ddd;
+
+    background:#f8f8f8;
+
+}
+
+#helpDocument{
+
+    flex:1;
+
+    padding:18px;
+
+    overflow:auto;
+
+    outline:none;
+
+    font-family:Arial,sans-serif;
+
+    font-size:14px;
+
+}
+
+</style>
+
+<div id="helpLayout">
+
+    <div id="helpCommands">
+
+        <div id="helpCommandsHeader">
+
+            Comandos
+
+        </div>
+
+        <div id="helpCommandsList">
+
+            <div class="helpCommand selected">
+                ADDUSER
+            </div>
+
+            <div class="helpCommand">
+                BAN
+            </div>
+
+            <div class="helpCommand">
+                CATALOG
+            </div>
+
+            <div class="helpCommand">
+                CONFIG
+            </div>
+
+            <div class="helpCommand">
+                HELP
+            </div>
+
+            <div class="helpCommand">
+                LETMEIN
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="helpEditorArea">
+
+        <div id="helpToolbar">
+
+            <button><b>B</b></button>
+
+            <button><i>I</i></button>
+
+            <button><u>U</u></button>
+
+            <button>H1</button>
+
+            <button>H2</button>
+
+            <button>• Lista</button>
+
+            <button>1. Lista</button>
+
+            <button>Link</button>
+
+            <button>Código</button>
+
+        </div>
+
+        <div
+            id="helpDocument"
+            contenteditable="true">
+
+<h2>ADDUSER</h2>
+
+<p>
+
+Aquí se editará la ayuda del comando.
+
+</p>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+<?!= include('HelpEditorCode'); ?>
+
+</script>

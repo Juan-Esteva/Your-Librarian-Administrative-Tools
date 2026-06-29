@@ -489,6 +489,7 @@ Your Librarian
     </div>
 
     <?!= include('TableEditor'); ?>
+    <?!= include('HelpEditor'); ?>
 
 </div>
 
@@ -575,16 +576,26 @@ function showIdle(){
 
 function showHelpEditor(){
 
-    document
-        .getElementById("workArea")
-        .innerHTML =
+    document.getElementById("idleLogo").style.display      = "none";
 
-        "<h2>Editor de Ayuda</h2>" +
+    document.getElementById("tableContainer").style.display = "none";
 
-        "<p>Próximamente...</p>";
+    document.getElementById("helpContainer").style.display  = "block";
+
+    document.getElementById("contextToolbar").innerHTML =
+
+        '<button onclick="saveHelp()">Guardar</button>' +
+
+        '<button onclick="togglePreview()">Vista previa</button>' +
+
+        '<button onclick="showStyleGuide()">Estilo</button>';
+
+    setStatus("Editor de Ayuda");
+  
+initHelpEditor();
 
 }
-
+  
 function showTableEditor(){
 
     document.getElementById("workArea").innerHTML =
