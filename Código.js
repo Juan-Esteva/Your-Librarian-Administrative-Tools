@@ -67,6 +67,27 @@ file
 
 }
 
+function GetCommandList(){
+
+  const rows = LoadTable("commands");
+
+  if(!rows || rows.length < 2)
+    return [];
+
+  const headers = rows[0];
+
+  const idxCommand = headers.indexOf("command");
+  const idxType    = headers.indexOf("type");
+
+  return rows
+    .slice(1)
+    .filter(row => row[idxType] === "COMMAND")
+    .map(row => row[idxCommand])
+    .filter(cmd => cmd)
+    .sort((a,b)=>a.localeCompare(b));
+
+}
+
 function SaveTable(
 tableName,
 rows

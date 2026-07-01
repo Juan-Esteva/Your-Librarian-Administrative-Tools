@@ -505,6 +505,43 @@ Listo
 
 <script>
 
+let currentModule = null;
+
+const modules = {
+
+    tables : {
+
+        container : "tableContainer",
+
+        init : function(){},
+
+        show : function(){
+
+            document.getElementById("tableContainer").style.display="block";
+
+        }
+
+    },
+
+    help : {
+
+    container : "helpContainer",
+
+    init : function(){
+
+        initHelpEditor();
+
+    },
+
+    show : function(){
+
+        document.getElementById("helpContainer").style.display="block";
+
+    }
+
+    }
+
+};
 
 const VERSION = {
 
@@ -516,6 +553,23 @@ const VERSION = {
 
 };
 
+function activateModule(name){
+
+    Object.values(modules).forEach(m=>{
+
+        document.getElementById(m.container).style.display="none";
+
+    });
+
+    document.getElementById("idleLogo").style.display="none";
+
+    currentModule = modules[name];
+
+    currentModule.init();
+
+    currentModule.show();
+
+}
 
 function setStatus(
 msg
@@ -534,6 +588,8 @@ msg;
 
 function showTables(){
 
+    activateModule("tables");
+
     document.getElementById("contextToolbar").innerHTML =
 
         '<button onclick="loadTable(\'config\')">CONFIG</button>' +
@@ -546,16 +602,22 @@ function showTables(){
 
         '<button style="margin-left:auto" onclick="saveTable()">Guardar</button>';
 
+    setStatus("Editor de Tablas");
+
 }
 
 function showTools(){
 
+    document.getElementById("tableContainer").style.display = "none";
+    document.getElementById("helpContainer").style.display  = "none";
+    document.getElementById("idleLogo").style.display       = "flex";
+
     document.getElementById("contextToolbar").innerHTML =
+
         '<button onclick="showHelpEditor()">Editor de Ayuda</button>';
 
-    document.getElementById("idleLogo").style.display = "flex";
+    setStatus("Herramientas");
 
-    document.getElementById("tableContainer").style.display = "none";
 }
 
 function showIdle(){
@@ -576,31 +638,13 @@ function showIdle(){
 
 function showHelpEditor(){
 
-    document.getElementById("idleLogo").style.display      = "none";
-
-    document.getElementById("tableContainer").style.display = "none";
-
-    document.getElementById("helpContainer").style.display  = "block";
+    activateModule("help");
 
     document.getElementById("contextToolbar").innerHTML =
 
-        '<button onclick="saveHelp()">Guardar</button>' +
-
-        '<button onclick="togglePreview()">Vista previa</button>' +
-
-        '<button onclick="showStyleGuide()">Estilo</button>';
+        '<button onclick="initHelpEditor()">Recargar</button>';
 
     setStatus("Editor de Ayuda");
-  
-initHelpEditor();
-
-}
-  
-function showTableEditor(){
-
-    document.getElementById("workArea").innerHTML =
-
-        document.getElementById("tableEditorTemplate").innerHTML;
 
 }
   

@@ -13,12 +13,12 @@
 
 #helpCommands{
 
-    width:220px;
+    width:150px;
+    min-width:150px;
+    max-width:150px;
 
     border-right:1px solid #ddd;
-
     overflow-y:auto;
-
     background:#fafafa;
 
 }
@@ -115,33 +115,7 @@
 
         </div>
 
-        <div id="helpCommandsList">
-
-            <div class="helpCommand selected">
-                ADDUSER
-            </div>
-
-            <div class="helpCommand">
-                BAN
-            </div>
-
-            <div class="helpCommand">
-                CATALOG
-            </div>
-
-            <div class="helpCommand">
-                CONFIG
-            </div>
-
-            <div class="helpCommand">
-                HELP
-            </div>
-
-            <div class="helpCommand">
-                LETMEIN
-            </div>
-
-        </div>
+        <div id="helpCommandsList"></div>
 
     </div>
 
@@ -149,23 +123,23 @@
 
         <div id="helpToolbar">
 
-            <button><b>B</b></button>
+        <button onclick="exec('bold')"><b>B</b></button>
 
-            <button><i>I</i></button>
+        <button onclick="exec('italic')"><i>I</i></button>
 
-            <button><u>U</u></button>
+        <button onclick="exec('underline')"><u>U</u></button>
 
-            <button>H1</button>
+        <button onclick="exec('formatBlock','H1')">H1</button>
 
-            <button>H2</button>
+        <button onclick="exec('formatBlock','H2')">H2</button>
 
-            <button>• Lista</button>
+        <button onclick="exec('insertUnorderedList')">• Lista</button>
 
-            <button>1. Lista</button>
+        <button onclick="exec('insertOrderedList')">1. Lista</button>
 
-            <button>Link</button>
+        <button onclick="insertLink()">Link</button>
 
-            <button>Código</button>
+        <button onclick="insertCode()">Código</button>
 
         </div>
 
@@ -191,6 +165,332 @@ Aquí se editará la ayuda del comando.
 
 <script>
 
-<?!= include('HelpEditorCode'); ?>
+    let savedRange = null;
+
+//
+// HelpEditorCode.js
+//
+
+
+//
+// Inicialización
+//
+
+function initHelpEditor(){
+
+    document.getElementById("contextToolbar").innerHTML =
+
+        '<button onclick="saveHelp()">Guardar</button>' +
+
+        '<button onclick="insertTemplate()">Plantilla</button>';
+
+    google.script.run
+
+        .withSuccessHandler(function(commands){
+
+            buildCommandList(commands);
+
+            if(commands.length){
+
+                const first = document.querySelector(
+                    "#helpCommandsList .helpCommand"
+                );
+
+                if(first){
+
+                    first.click();
+
+                }
+
+            }
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+                err.message,
+                "Error cargando comandos"
+            );
+
+        })
+
+        .YLGetCommandList();
+
+        const editor = document.getElementById("helpDocument");
+
+        editor.addEventListener("mouseup", saveSelection);
+
+        editor.addEventListener("keyup", saveSelection);
+
+        editor.addEventListener("mouseleave", saveSelection);
+
+}
+
+function saveSelection(){
+
+    const sel = window.getSelection();
+
+    if(sel.rangeCount){
+
+        savedRange = sel.getRangeAt(0).cloneRange();
+
+    }
+
+}
+
+function restoreSelection(){
+
+    if(!savedRange)
+        return false;
+
+    const sel = window.getSelection();
+
+    sel.removeAllRanges();
+
+    sel.addRange(savedRange);
+
+    return true;
+
+}
+//
+// Lista de comandos
+//
+
+function buildCommandList(commands){
+
+    const panel = document.getElementById("helpCommandsList");
+
+    panel.innerHTML = "";
+
+    commands.forEach(cmd=>{
+
+        const div = document.createElement("div");
+
+        div.className = "helpCommand";
+
+        div.textContent = cmd;
+
+        div.addEventListener("click", function(){
+
+            selectCommand(cmd, div);
+
+        });
+
+        panel.appendChild(div);
+
+    });
+
+}
+
+function selectCommand(cmd, element){
+
+    currentCommand = cmd;
+
+    document
+        .querySelectorAll("#helpCommandsList .helpCommand")
+        .forEach(item => item.classList.remove("selected"));
+
+    element.classList.add("selected");
+
+    setStatus("Cargando ayuda...");
+
+    google.script.run
+
+        .withSuccessHandler(function(help){
+
+            document.getElementById("helpDocument").innerHTML =
+                help.html;
+
+            setStatus("Editor de Ayuda");
+
+        
+
+        })
+
+        .withFailureHandler(function(err){
+
+            setStatus("ERROR");
+
+            dcAlert(err.message,"Error");
+
+        })
+
+        .YLGetHelp(cmd);
+
+}
+//
+// Documento
+//
+
+//
+// Utilidades
+//
+function saveHelp(){
+
+    if(!currentCommand){
+
+        dcAlert(
+            "No hay ningún comando seleccionado."
+        );
+
+        return;
+
+    }
+
+    setStatus("Guardando...");
+
+    const html =
+        document.getElementById("helpDocument").innerHTML;
+
+    google.script.run
+
+        .withSuccessHandler(function(){
+
+            setStatus("Guardado");
+
+            setTimeout(function(){
+
+                setStatus("Editor de Ayuda");
+
+            },1500);
+
+        })
+
+        .withFailureHandler(function(err){
+
+            setStatus("ERROR");
+
+            dcAlert(
+                err.message,
+                "Error guardando"
+            );
+
+        })
+
+        .YLSaveCurrentHelp(
+
+            currentCommand,
+
+            html
+
+        );
+
+}
+
+function exec(cmd,value=null){
+
+    document.execCommand(
+        cmd,
+        false,
+        value
+    );
+
+    document.getElementById(
+        "helpDocument"
+    ).focus();
+
+}
+
+async function insertLink(){
+
+    if(!restoreSelection()){
+
+        dcAlert(
+            "Seleccione primero el texto donde desea insertar el enlace."
+        );
+
+        return;
+
+    }
+
+    const url = await dcPrompt(
+
+        "Dirección del enlace:",
+
+        "https://"
+
+    );
+
+    if(!url)
+        return;
+
+    document.execCommand(
+
+        "createLink",
+
+        false,
+
+        url
+
+    );
+
+    saveSelection();
+
+}
+
+function insertCode(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount)
+        return;
+
+    const text = sel.toString();
+
+    document.execCommand(
+        "insertHTML",
+        false,
+        "<pre><code>"+text+"</code></pre>"
+    );
+
+}
+
+function insertTemplate(){
+
+    dcConfirm(
+
+        "La plantilla reemplazará el contenido actual.",
+
+        function(){
+
+            document.getElementById("helpDocument").innerHTML =
+
+`<h1>Título</h1>
+
+<p>Descripción general del comando.</p>
+
+<h2>Sintaxis</h2>
+
+<pre><code>
+COMANDO [opciones]
+</code></pre>
+
+<h2>Parámetros</h2>
+
+<ul>
+<li></li>
+</ul>
+
+<h2>Ejemplos</h2>
+
+<pre><code>
+
+</code></pre>
+
+<h2>Observaciones</h2>
+
+<p></p>`;
+
+        }
+
+    );
+
+}
+
+window.saveHelp = saveHelp;
+window.insertTemplate = insertTemplate;
+window.insertCode = insertCode;
+window.insertLink = insertLink;
 
 </script>

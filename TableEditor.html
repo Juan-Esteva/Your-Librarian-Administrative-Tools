@@ -290,6 +290,43 @@ document.getElementById("tableContainer").style.display = "block";
 
 }
 
+function getTypeValues(){
+
+    switch(currentTable){
+
+        case "commands":
+
+            return [
+
+                "COMMAND",
+                "COMMENT"
+
+            ];
+
+        case "config":
+
+            return [
+
+                "BOOLEAN",
+                "COMMENT",
+                "EMAIL",
+                "FILEID",
+                "FOLDERID",
+                "INTEGER",
+                "STRING"
+                
+                
+
+            ];
+
+        default:
+
+            return [];
+
+    }
+
+}
+
 function createEditor(columnName,value,rowIndex,colIndex){
 
     let editor;
@@ -298,7 +335,7 @@ function createEditor(columnName,value,rowIndex,colIndex){
 
         editor = document.createElement("select");
 
-        ["COMMAND","COMMENT"].forEach(v=>{
+        getTypeValues().forEach(v=>{
 
             const option = document.createElement("option");
 
@@ -345,6 +382,7 @@ function createEditor(columnName,value,rowIndex,colIndex){
 
 }
 
+
 function getEditorValue(editor){
 
     if(editor.type === "checkbox"){
@@ -381,6 +419,24 @@ function insertRow(index){
     const cols = tableHeaders.length;
 
     const newRow = Array(cols).fill("");
+
+    const idxType = tableHeaders.indexOf("type");
+
+    if(idxType >= 0){
+
+        switch(currentTable){
+
+            case "commands":
+                newRow[idxType] = "COMMAND";
+                break;
+
+            case "config":
+                newRow[idxType] = "STRING";
+                break;
+
+        }
+
+    }
 
     tableData.splice(index+1,0,newRow);
 

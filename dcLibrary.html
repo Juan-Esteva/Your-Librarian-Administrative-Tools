@@ -1,24 +1,220 @@
+
+<style>
+
+#dcDialogOverlay{
+
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,.30);
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:99999;
+
+}
+
+#dcDialog{
+
+    width:420px;
+
+    background:white;
+
+    border-radius:10px;
+
+    border:1px solid #999;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+    overflow:hidden;
+
+}
+
+#dcDialogHeader{
+
+    background:rgb(140,230,255);
+
+    padding:10px;
+
+    font-weight:bold;
+
+}
+
+#dcDialogBody{
+
+    padding:18px;
+
+    line-height:1.5;
+
+}
+
+#dcDialogButtons{
+
+    padding:10px;
+
+    text-align:right;
+
+    border-top:1px solid #ddd;
+
+}
+
+#dcDialogButtons button{
+
+    min-width:80px;
+
+}
+
+#dcPromptInput{
+
+    width:100%;
+
+    margin-top:10px;
+
+    padding:6px;
+
+    box-sizing:border-box;
+
+}
+
+</style>
+
+<div id="dcDialogOverlay">
+
+    <div id="dcDialog">
+
+        <div id="dcDialogHeader"></div>
+
+        <div id="dcDialogBody"></div>
+
+        <div id="dcDialogButtons"></div>
+
+    </div>
+
+</div>
+
+
 <script>
 
 /******************************************************************************
  * dcLibrary
  ******************************************************************************/
 
+function dcCloseDialog(){
+
+    document.getElementById("dcDialogOverlay").style.display="none";
+
+}
+
 function dcAlert(message,title="Información"){
 
-    alert(
-        title + "\n\n" + message
-    );
+    document.getElementById("dcDialogHeader").textContent = title;
+
+    document.getElementById("dcDialogBody").innerHTML =
+        message;
+
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button onclick="dcCloseDialog()">Aceptar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+        "flex";
 
 }
 
 function dcConfirm(message,callback,title="Confirmar"){
 
-    if(confirm(title + "\n\n" + message)){
+    document.getElementById("dcDialogHeader").textContent = title;
 
-        callback();
+    document.getElementById("dcDialogBody").innerHTML =
+        message;
 
-    }
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button id="dcCancel">Cancelar</button>'+
+
+        '<button id="dcAccept">Aceptar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+        "flex";
+
+    document.getElementById("dcCancel").onclick =
+
+        function(){
+
+            dcCloseDialog();
+
+        };
+
+    document.getElementById("dcAccept").onclick =
+
+        function(){
+
+            dcCloseDialog();
+
+            callback();
+
+        };
+
+}
+
+function dcPrompt(message,defaultValue="",title="Entrada"){
+
+    return new Promise(function(resolve){
+
+        document.getElementById("dcDialogHeader").textContent =
+            title;
+
+        document.getElementById("dcDialogBody").innerHTML =
+
+            message +
+
+            '<br><input id="dcPromptInput" value="' +
+
+            defaultValue +
+
+            '">';
+
+        document.getElementById("dcDialogButtons").innerHTML =
+
+            '<button id="dcCancel">Cancelar</button>'+
+
+            '<button id="dcAccept">Aceptar</button>';
+
+        document.getElementById("dcDialogOverlay").style.display =
+            "flex";
+
+        document.getElementById("dcPromptInput").focus();
+
+        document.getElementById("dcCancel").onclick =
+
+            function(){
+
+                dcCloseDialog();
+
+                resolve(null);
+
+            };
+
+        document.getElementById("dcAccept").onclick =
+
+            function(){
+
+                const value =
+
+                    document.getElementById(
+                        "dcPromptInput"
+                    ).value;
+
+                dcCloseDialog();
+
+                resolve(value);
+
+            };
+
+    });
 
 }
 
