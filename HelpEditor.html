@@ -101,6 +101,115 @@
 
     font-size:14px;
 
+    line-height:1.5;
+
+}
+
+#helpDocument,
+#helpDocument p,
+#helpDocument li,
+#helpDocument td,
+#helpDocument th,
+#helpDocument div{
+
+    font-family:inherit;
+
+    font-size:inherit;
+
+    line-height:inherit;
+
+}
+
+#helpDocument h1{
+
+    font-size:26px;
+
+    margin:0 0 12px 0;
+
+}
+
+#helpDocument h2{
+
+    font-size:20px;
+
+    margin:18px 0 10px 0;
+
+}
+
+#helpDocument pre{
+
+    background:#f7f7f7;
+
+    border:1px solid #ddd;
+
+    border-radius:6px;
+
+    padding:10px;
+
+    overflow:auto;
+
+}
+
+#helpDocument code{
+
+    font-family:Consolas,monospace;
+
+    font-size:13px;
+
+}
+
+.permissionsTable{
+
+    border-collapse:collapse;
+
+    margin:0 0 18px 0;
+
+    font-family:Arial,sans-serif;
+
+    font-size:12px;
+
+}
+
+.permissionsTable th{
+
+    width:36px;
+
+    height:22px;
+
+    border:2px solid #555;
+
+    background:#f3f3f3;
+
+    text-align:center;
+
+    font-family:Arial,sans-serif;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+}
+
+.permissionsTable td{
+
+    width:36px;
+
+    height:26px;
+
+    border:2px solid #555;
+
+    text-align:center;
+
+    vertical-align:middle;
+
+    font-family:Arial,sans-serif;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    line-height:1;
+
 }
 
 </style>
@@ -123,6 +232,8 @@
 
         <div id="helpToolbar">
 
+        <button onclick="insertPermissions()">P</button>
+
         <button onclick="exec('bold')"><b>B</b></button>
 
         <button onclick="exec('italic')"><i>I</i></button>
@@ -143,19 +254,7 @@
 
         </div>
 
-        <div
-            id="helpDocument"
-            contenteditable="true">
-
-<h2>ADDUSER</h2>
-
-<p>
-
-Aquí se editará la ayuda del comando.
-
-</p>
-
-        </div>
+        <div id="helpDocument" contenteditable="true"></div>
 
     </div>
 
@@ -165,7 +264,30 @@ Aquí se editará la ayuda del comando.
 
 <script>
 
+    const HELP_LANGUAGES = [
+
+    "ES",
+
+    "EN",
+
+    "IT",
+
+    "FR",
+
+    "RU",
+
+    "CN"
+
+];
+
+    let currentLanguage = null;
+
     let savedRange = null;
+
+    let currentMode = "HELP";
+
+    let currentCommand = null;
+  
 
 //
 // HelpEditorCode.js
@@ -182,8 +304,32 @@ function initHelpEditor(){
 
         '<button onclick="saveHelp()">Guardar</button>' +
 
-        '<button onclick="insertTemplate()">Plantilla</button>';
+        '<button onclick="insertTemplate()">Plantilla</button>' +
 
+        '<button onclick="editTemplate()">Editar plantilla</button>' +
+
+        '<span style="margin-left:24px;"> 🌐 </span>' +
+
+        '<select ' +
+
+'id="languageSelector" ' +
+
+'onchange="changeLanguage(this.value)" ' +
+
+'style="width:80px;">' +
+
+'</select>';
+
+    google.script.run
+
+    .withSuccessHandler(function(language){
+
+        loadLanguageSelector(language);
+
+    })
+
+    .YLGetCurrentLanguage();
+  
     google.script.run
 
         .withSuccessHandler(function(commands){
@@ -219,11 +365,17 @@ function initHelpEditor(){
 
         const editor = document.getElementById("helpDocument");
 
-        editor.addEventListener("mouseup", saveSelection);
+        if(!editor.dataset.initialized){
 
-        editor.addEventListener("keyup", saveSelection);
+            editor.addEventListener("mouseup", saveSelection);
 
-        editor.addEventListener("mouseleave", saveSelection);
+            editor.addEventListener("keyup", saveSelection);
+
+            editor.addEventListener("mouseleave", saveSelection);
+
+            editor.dataset.initialized = "1";
+
+        }
 
 }
 
@@ -285,6 +437,8 @@ function buildCommandList(commands){
 
 function selectCommand(cmd, element){
 
+    currentMode = "HELP";
+    
     currentCommand = cmd;
 
     document
@@ -310,13 +464,19 @@ function selectCommand(cmd, element){
 
         .withFailureHandler(function(err){
 
-            setStatus("ERROR");
+            setStatus("Error");
 
             dcAlert(err.message,"Error");
 
         })
 
-        .YLGetHelp(cmd);
+        .YLGetHelp(
+
+    cmd,
+
+    currentLanguage
+
+);
 
 }
 //
@@ -326,7 +486,52 @@ function selectCommand(cmd, element){
 //
 // Utilidades
 //
+
 function saveHelp(){
+
+    const html =
+        document.getElementById("helpDocument").innerHTML;
+
+    setStatus("Guardando...",true);
+
+    if(currentMode==="TEMPLATE"){
+
+        google.script.run
+
+            .withSuccessHandler(function(){
+
+                setStatus("Plantilla guardada");
+
+                setTimeout(function(){
+
+                    setStatus("Editando plantilla");
+
+                },1500);
+
+            })
+
+            .withFailureHandler(function(err){
+
+                setStatus("Error");
+
+                dcAlert(
+                    err.message,
+                    "Plantilla"
+                );
+
+            })
+
+            .YLSaveTemplate(
+
+                currentLanguage,
+
+                html
+
+            );
+
+        return;
+
+    }
 
     if(!currentCommand){
 
@@ -334,14 +539,11 @@ function saveHelp(){
             "No hay ningún comando seleccionado."
         );
 
+        setStatus("Editor de Ayuda");
+
         return;
 
     }
-
-    setStatus("Guardando...");
-
-    const html =
-        document.getElementById("helpDocument").innerHTML;
 
     google.script.run
 
@@ -359,7 +561,7 @@ function saveHelp(){
 
         .withFailureHandler(function(err){
 
-            setStatus("ERROR");
+            setStatus("Error");
 
             dcAlert(
                 err.message,
@@ -372,7 +574,9 @@ function saveHelp(){
 
             currentCommand,
 
-            html
+            html,
+
+            currentLanguage
 
         );
 
@@ -394,16 +598,6 @@ function exec(cmd,value=null){
 
 async function insertLink(){
 
-    if(!restoreSelection()){
-
-        dcAlert(
-            "Seleccione primero el texto donde desea insertar el enlace."
-        );
-
-        return;
-
-    }
-
     const url = await dcPrompt(
 
         "Dirección del enlace:",
@@ -415,20 +609,33 @@ async function insertLink(){
     if(!url)
         return;
 
-    document.execCommand(
+    const texto = await dcPrompt(
 
-        "createLink",
-
-        false,
+        "Texto del enlace:",
 
         url
 
     );
 
-    saveSelection();
+    if(!texto)
+        return;
+
+    insertHTMLAtCursor(
+
+        '<a href="' +
+
+        url +
+
+        '" target="_blank">' +
+
+        texto +
+
+        '</a>'
+
+    );
 
 }
-
+  
 function insertCode(){
 
     const sel = window.getSelection();
@@ -448,49 +655,197 @@ function insertCode(){
 
 function insertTemplate(){
 
-    dcConfirm(
+    google.script.run
 
-        "La plantilla reemplazará el contenido actual.",
+        .withSuccessHandler(function(html){
 
-        function(){
+            insertHTMLAtCursor(html);
 
-            document.getElementById("helpDocument").innerHTML =
+        })
 
-`<h1>Título</h1>
+        .withFailureHandler(function(err){
 
-<p>Descripción general del comando.</p>
+            dcAlert(
+                err.message,
+                "Plantilla"
+            );
 
-<h2>Sintaxis</h2>
+        })
 
-<pre><code>
-COMANDO [opciones]
-</code></pre>
-
-<h2>Parámetros</h2>
-
-<ul>
-<li></li>
-</ul>
-
-<h2>Ejemplos</h2>
-
-<pre><code>
-
-</code></pre>
-
-<h2>Observaciones</h2>
-
-<p></p>`;
-
-        }
-
-    );
+        .YLGetTemplate(currentLanguage);
 
 }
 
-window.saveHelp = saveHelp;
-window.insertTemplate = insertTemplate;
-window.insertCode = insertCode;
-window.insertLink = insertLink;
+function insertHTMLAtCursor(html){
 
+    if(!restoreSelection())
+        return false;
+
+    const range = savedRange.cloneRange();
+
+    const fragment = range.createContextualFragment(html);
+
+    range.deleteContents();
+
+    range.insertNode(fragment);
+
+    saveSelection();
+
+    document.getElementById("helpDocument").focus();
+
+    return true;
+
+}
+
+function insertPermissions(){
+
+    if(!currentCommand){
+
+        dcAlert(
+            "No hay ningún comando seleccionado."
+        );
+
+        return;
+
+    }
+
+    google.script.run
+
+        .withSuccessHandler(function(p){
+
+            const dot = "✓";
+          
+            const html =
+
+                '<table class="permissionsTable">' +
+
+                '<tr>' +
+
+                    '<th>SU</th>' +
+
+                    '<th>AD</th>' +
+
+                    '<th>UL</th>' +
+
+                    '<th>US</th>' +
+
+                '</tr>' +
+
+                '<tr>' +
+
+                    '<td>' + (p.SU ? dot : "") + '</td>' +
+
+                    '<td>' + (p.AD ? dot : "") + '</td>' +
+
+                    '<td>' + (p.UL ? dot : "") + '</td>' +
+
+                    '<td>' + (p.US ? dot : "") + '</td>' +
+
+                '</tr>' +
+
+                '</table>';
+
+            insertHTMLAtCursor(html + "<p><br></p><p><br></p>");
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+                err.message,
+                "Permisos"
+            );
+
+        })
+
+        .YLGetCommandPermissions(currentCommand);
+
+}
+
+function loadLanguageSelector(defaultLanguage){
+
+    currentLanguage = defaultLanguage;
+
+    const sel = document.getElementById("languageSelector");
+
+    sel.innerHTML = "";
+
+    HELP_LANGUAGES.forEach(function(lang){
+
+        const option = document.createElement("option");
+
+        option.value = lang;
+
+        option.textContent = lang;
+
+        option.selected = (lang === defaultLanguage);
+
+        sel.appendChild(option);
+
+    });
+
+}
+
+function changeLanguage(language){
+
+    currentLanguage = language;
+
+    if(currentCommand){
+
+        const selected = document.querySelector(
+            "#helpCommandsList .helpCommand.selected"
+        );
+
+        if(selected){
+
+            selectCommand(
+                currentCommand,
+                selected
+            );
+
+        }
+
+    }
+
+}
+
+function editTemplate(){
+
+    google.script.run
+
+        .withSuccessHandler(function(html){
+
+            currentMode = "TEMPLATE";
+
+            currentCommand = null;
+
+            document
+                .querySelectorAll("#helpCommandsList .helpCommand")
+                .forEach(item=>item.classList.remove("selected"));
+
+            document.getElementById("helpDocument").innerHTML = html;
+
+            setStatus(
+                "Editando plantilla (" +
+                currentLanguage +
+                ")"
+            );
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+                err.message,
+                "Plantilla"
+            );
+
+        })
+
+        .YLGetTemplate(currentLanguage);
+
+}
+
+
+  
 </script>

@@ -425,6 +425,26 @@ min-width:260px;
     letter-spacing:.3px;
 
 }
+
+#status.busy{
+
+    color:#c00000;
+
+    font-weight:bold;
+
+    animation:statusBlink .8s infinite;
+
+}
+
+@keyframes statusBlink{
+
+    50%{
+
+        opacity:.25;
+
+    }
+
+}
   
 
 </style>
@@ -571,18 +591,19 @@ function activateModule(name){
 
 }
 
-function setStatus(
-msg
-){
+function setStatus(msg,busy=false){
 
-document
+    const status = document.getElementById("status");
 
-.getElementById(
-"status"
-)
+    status.innerText = msg;
 
-.innerText =
-msg;
+    if(busy)
+
+        status.classList.add("busy");
+
+    else
+
+        status.classList.remove("busy");
 
 }
 
@@ -620,29 +641,10 @@ function showTools(){
 
 }
 
-function showIdle(){
-
-    document.getElementById("workArea").innerHTML =
-
-        '<div style="height:70vh;display:flex;justify-content:center;align-items:center;">'+
-
-        '<img '+
-
-        'src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w400" '+
-
-        'style="width:320px;opacity:.08;">'+
-
-        '</div>';
-
-}
 
 function showHelpEditor(){
 
     activateModule("help");
-
-    document.getElementById("contextToolbar").innerHTML =
-
-        '<button onclick="initHelpEditor()">Recargar</button>';
 
     setStatus("Editor de Ayuda");
 

@@ -111,19 +111,19 @@ function YLLoadHelp(language){
 
 }
 
-function YLGetHelp(command){
+function YLGetHelp(command,language){
 
-    const language = YLGetLanguage();
+    language = language || YLGetLanguage();
 
     const help = YLLoadHelp(language);
 
     if(help.hasOwnProperty(command))
         return help[command];
 
-    return {
+    return{
 
-        html :
-            "<h2>" + command + "</h2>" +
+        html:
+            "<h2>"+command+"</h2>"+
             "<p>Aún no existe ayuda para este comando.</p>"
 
     };
@@ -152,15 +152,15 @@ function YLSaveHelp(language,data){
 
 }
 
-function YLSaveCurrentHelp(command,html){
+function YLSaveCurrentHelp(command,html,language){
 
-    const language = YLGetLanguage();
+    language = language || YLGetLanguage();
 
     const help = YLLoadHelp(language);
 
-    help[command] = {
+    help[command]={
 
-        html: html
+        html:html
 
     };
 
@@ -168,3 +168,110 @@ function YLSaveCurrentHelp(command,html){
 
 }
 
+function YLGetCommandPermissions(command){
+
+    const rows = LoadTable("commands");
+
+    const headers = rows[0];
+
+    const idxCommand = headers.indexOf("command");
+    const idxSU      = headers.indexOf("canSuperUser");
+    const idxAD      = headers.indexOf("canAdmin");
+    const idxUL      = headers.indexOf("canUploader");
+    const idxUS      = headers.indexOf("canUser");
+
+    for(let i=1;i<rows.length;i++){
+
+        if(rows[i][idxCommand]===command){
+
+            return{
+
+                SU : rows[i][idxSU]==="Y",
+                AD : rows[i][idxAD]==="Y",
+                UL : rows[i][idxUL]==="Y",
+                US : rows[i][idxUS]==="Y"
+
+            };
+
+        }
+
+    }
+
+    throw new Error(
+        "Comando no encontrado: " + command
+    );
+
+}
+
+function YLGetCurrentLanguage(){
+
+    return YLGetLanguage();
+
+}
+
+function YLBuildTemplateFileName(language){
+
+    language = (language || "ES").toUpperCase();
+
+    return "template." + language + ".html";
+
+}
+
+function YLResolveTemplateFile(language){
+
+    const folderId = YLGetHelpFolderId();
+
+    const folder = DriveApp.getFolderById(folderId);
+
+    const fileName = YLBuildTemplateFileName(language);
+
+    const files = folder.getFilesByName(fileName);
+
+    if(files.hasNext())
+        return files.next();
+
+    if(language.toUpperCase()=="ES")
+
+        throw new Error(
+            "No existe " + fileName
+        );
+
+    const spanish = folder.getFilesByName("template.ES.html");
+
+    if(!spanish.hasNext())
+
+        throw new Error(
+            "No existe template.ES.html"
+        );
+
+    return spanish
+        .next()
+        .makeCopy(fileName,folder);
+
+}
+
+function YLLoadTemplate(language){
+
+    const file = YLResolveTemplateFile(language);
+
+    return file
+        .getBlob()
+        .getDataAsString("UTF-8");
+
+}
+
+function YLSaveTemplate(language,html){
+
+    const file = YLResolveTemplateFile(language);
+
+    file.setContent(html);
+
+}
+
+function YLGetTemplate(language){
+
+    language = language || YLGetLanguage();
+
+    return YLLoadTemplate(language);
+
+}
