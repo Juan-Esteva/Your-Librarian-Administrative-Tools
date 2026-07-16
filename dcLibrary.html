@@ -1,4 +1,4 @@
-
+<!-- Ultimo guardado : 202607131950 -->
 <style>
 
 #dcDialogOverlay{
@@ -217,5 +217,68 @@ function dcPrompt(message,defaultValue="",title="Entrada"){
     });
 
 }
+
+function dcDialog(title,html){
+
+    document.getElementById("dcDialogHeader").textContent = title;
+
+    document.getElementById("dcDialogBody").innerHTML = html;
+
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button onclick="dcCloseDialog()">Cerrar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+
+        "flex";
+
+}
+
+function dcList(title,items){
+
+    return new Promise(function(resolve){
+
+        let html = "";
+
+        items.forEach(function(item){
+
+            html +=
+
+                '<div class="dcListItem" '+
+                'style="padding:8px;border-bottom:1px solid #ddd;cursor:pointer;" '+
+                'onclick="dcListSelect(\''+
+
+                item.replace(/'/g,"\\'")+
+
+                '\')">'+
+
+                item+
+
+                '</div>';
+
+        });
+
+        window.dcListResolve = resolve;
+
+        dcDialog(title,html);
+
+    });
+
+}
+
+function dcListSelect(value){
+
+    dcCloseDialog();
+
+    if(window.dcListResolve){
+
+        window.dcListResolve(value);
+
+        window.dcListResolve = null;
+
+    }
+
+}
+
 
 </script>

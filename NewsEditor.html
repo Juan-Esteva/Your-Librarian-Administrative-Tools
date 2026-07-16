@@ -1,0 +1,408 @@
+<!-- Ultimo guardado : 202607141021 -->
+<div
+    id="newsContainer"
+    style="
+        display:none;
+        height:100%;
+        background:#ffffff;
+        box-sizing:border-box;
+        padding:10px;
+    ">
+
+    <div id="newsHeader">
+
+        <table style="width:100%;border-collapse:collapse;">
+
+            <tr>
+
+                <td style="width:70px;">
+                    <b>Título</b>
+                </td>
+
+                <td>
+
+                    <input
+                        id="newsTitle"
+                        type="text"
+                        style="
+                            width:100%;
+                            box-sizing:border-box;
+                            padding:4px 6px;
+                            background:#ffffff;
+                            border:1px solid #b8b8b8;
+                            border-radius:4px;
+                        ">
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td colspan="2" style="padding-top:8px;">
+
+                    <label
+                        title="Incluir en el reporte diario"
+                        style="margin-right:18px;">
+
+                        <input id="newsDaily" type="checkbox">
+
+                        Diario
+
+                    </label>
+
+                    <label
+                        title="Incluir en el reporte semanal"
+                        style="margin-right:18px;">
+
+                        <input id="newsWeekly" type="checkbox">
+
+                        Semanal
+
+                    </label>
+
+                    <label
+                        title="Incluir en el reporte mensual"
+                        style="margin-right:18px;">
+
+                        <input id="newsMonthly" type="checkbox">
+
+                        Mensual
+
+                    </label>
+
+                    <label
+                        title="Incluir en el catálogo"
+                        style="margin-right:18px;">
+
+                        <input id="newsCatalog" type="checkbox">
+
+                        Catálogo
+
+                    </label>
+
+                    <label
+                        title="Conservar la gacetilla después de ser publicada">
+
+                        <input id="newsPreserve" type="checkbox">
+
+                        Mantener activa
+
+                    </label>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+    <div id="newsToolbar"></div>
+
+    <div
+        id="newsDocument"
+        contenteditable="true"
+        style="
+            height:calc(100% - 145px);
+            overflow:auto;
+            border:1px solid #b8b8b8;
+            border-radius:6px;
+            padding:12px;
+            background:#ffffff;
+            margin-top:8px;
+            margin-bottom:10px;
+            box-sizing:border-box;
+        ">
+    </div>
+
+    <div
+        id="newsFooter"
+        style="margin-top:10px;">
+
+        <button onclick="saveNews()">
+
+            Guardar
+
+        </button>
+
+        <button onclick="deleteNews()">
+
+            Eliminar
+
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+function initNewsEditor(){
+
+    const header = document.getElementById("newsHeader");
+
+    header.style.background = "#eef7fc";
+    header.style.border = "1px solid #b8dceb";
+    header.style.borderRadius = "6px";
+    header.style.padding = "8px";
+    header.style.marginBottom = "8px";
+
+    const toolbar = document.getElementById("newsToolbar");
+
+    toolbar.style.background = "#f5f5f5";
+    toolbar.style.border = "1px solid #cccccc";
+    toolbar.style.borderRadius = "6px";
+    toolbar.style.padding = "6px";
+    toolbar.style.marginBottom = "8px";
+
+    const editor = document.getElementById("newsDocument");
+
+    htmlSetEditor("newsDocument");
+
+toolbar.innerHTML =
+
+    '<button onclick="htmlBold()"><b>B</b></button>' +
+
+    '<button onclick="htmlItalic()"><i>I</i></button>' +
+
+    '<button onclick="htmlUnderline()"><u>U</u></button>' +
+
+    '<button onclick="htmlH1()">H1</button>' +
+
+    '<button onclick="htmlH2()">H2</button>' +
+
+    '<button onclick="htmlBulletList()">•</button>' +
+
+    '<button onclick="htmlNumberList()">1.</button>' +
+
+    '<button onclick="htmlAlignLeft()">'+
+    '<svg width="16" height="16" viewBox="0 0 16 16">'+
+    '<path d="M2 3H12M2 6H9M2 9H13M2 12H10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+    '</svg></button>' +
+
+    '<button onclick="htmlAlignCenter()">'+
+    '<svg width="16" height="16" viewBox="0 0 16 16">'+
+    '<path d="M4 3H12M3 6H13M4 9H12M3 12H13" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+    '</svg></button>' +
+
+    '<button onclick="htmlAlignRight()">'+
+    '<svg width="16" height="16" viewBox="0 0 16 16">'+
+    '<path d="M4 3H14M7 6H14M3 9H14M6 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+    '</svg></button>' +
+
+    '<button onclick="htmlJustify()">'+
+    '<svg width="16" height="16" viewBox="0 0 16 16">'+
+    '<path d="M2 3H14M2 6H14M2 9H14M2 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+    '</svg></button>' +
+
+    '<button onclick="htmlInsertLink()">Link</button>' +
+
+    '<button onclick="htmlInsertImage()">Img</button>';
+
+    if(!editor.dataset.initialized){
+
+        editor.addEventListener(
+            "mouseup",
+            htmlSaveSelection
+        );
+
+        editor.addEventListener(
+            "keyup",
+            htmlSaveSelection
+        );
+
+        editor.addEventListener(
+            "mouseleave",
+            htmlSaveSelection
+        );
+
+        editor.dataset.initialized = "1";
+
+    }
+
+    loadNews();
+
+}
+
+function loadNews(){
+
+    google.script.run
+
+        .withSuccessHandler(function(news){
+
+            document.getElementById("newsTitle").value =
+
+                news.title || "";
+
+            document.getElementById("newsDaily").checked =
+
+                !!news.daily;
+
+            document.getElementById("newsWeekly").checked =
+
+                !!news.weekly;
+
+            document.getElementById("newsMonthly").checked =
+
+                !!news.monthly;
+
+            document.getElementById("newsCatalog").checked =
+
+                !!news.catalog;
+
+            document.getElementById("newsPreserve").checked =
+
+                !!news.preserve;
+
+            document.getElementById("newsDocument").innerHTML =
+
+                news.html || "";
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+
+                err.message,
+
+                "Editor de Novedades"
+
+            );
+
+        })
+
+        .YLGetNews();
+
+}
+
+function saveNews(){
+
+    const news = {
+
+        title : document
+            .getElementById("newsTitle")
+            .value
+            .trim(),
+
+        daily : document
+            .getElementById("newsDaily")
+            .checked,
+
+        weekly : document
+            .getElementById("newsWeekly")
+            .checked,
+
+        monthly : document
+            .getElementById("newsMonthly")
+            .checked,
+
+        catalog : document
+            .getElementById("newsCatalog")
+            .checked,
+
+        preserve : document
+            .getElementById("newsPreserve")
+            .checked,
+
+        html : document
+            .getElementById("newsDocument")
+            .innerHTML
+
+    };
+
+    google.script.run
+
+        .withSuccessHandler(function(){
+
+            dcAlert(
+
+                "La gacetilla fue guardada correctamente.",
+
+                "EDN"
+
+            );
+
+            loadNews();
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+
+                err.message,
+
+                "EDN"
+
+            );
+
+        })
+
+        .YLSaveNews(news);
+
+}
+
+function deleteNews(){
+
+    dcConfirm(
+
+        "¿Eliminar la gacetilla activa?",
+
+        function(){
+
+            google.script.run
+
+                .withSuccessHandler(function(){
+
+                    document.getElementById("newsTitle").value = "";
+
+                    document.getElementById("newsDaily").checked = true;
+
+                    document.getElementById("newsWeekly").checked = false;
+
+                    document.getElementById("newsMonthly").checked = false;
+
+                    document.getElementById("newsCatalog").checked = false;
+
+                    document.getElementById("newsPreserve").checked = true;
+
+                    document.getElementById("newsDocument").innerHTML = "";
+
+                    document.getElementById("newsTitle").focus();
+
+                    dcAlert(
+
+                        "La gacetilla fue eliminada.",
+
+                        "EDN"
+
+                    );
+
+                })
+
+                .withFailureHandler(function(err){
+
+                    dcAlert(
+
+                        err.message,
+
+                        "EDN"
+
+                    );
+
+                })
+
+                .YLDeleteNews();
+
+        },
+
+        "EDN"
+
+    );
+
+}
+
+</script>
+

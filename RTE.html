@@ -1,0 +1,309 @@
+<!-- Ultimo guardado : 202607131950 -->
+<script>
+console.log("RTE cargado");
+/* --- Estado --- */
+
+const htmlEditor = {
+
+    editor : null,
+
+    savedRange : null
+
+};
+
+/*   Inicialización   */
+
+function htmlSetEditor(id){
+
+    htmlEditor.editor = document.getElementById(id);
+
+    return htmlEditor.editor;
+
+}
+
+function htmlGetEditor(){
+
+    return htmlEditor.editor;
+
+}
+
+function htmlFocus(){
+
+    if(htmlEditor.editor)
+
+        htmlEditor.editor.focus();
+
+}
+
+/*    Selección    */
+
+function htmlSaveSelection(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount)
+        return false;
+
+    htmlEditor.savedRange =
+
+        sel.getRangeAt(0).cloneRange();
+
+    return true;
+
+}
+
+function htmlRestoreSelection(){
+
+    if(!htmlEditor.savedRange)
+        return false;
+
+    const sel = window.getSelection();
+
+    sel.removeAllRanges();
+
+    sel.addRange(
+
+        htmlEditor.savedRange
+
+    );
+
+    return true;
+
+}
+
+/*   Ejecución   */
+
+function htmlExec(cmd,value=null){
+
+    htmlFocus();
+
+    if(htmlEditor.savedRange){
+
+        const sel = window.getSelection();
+
+        sel.removeAllRanges();
+
+        sel.addRange(htmlEditor.savedRange);
+
+    }
+
+    document.execCommand(cmd,false,value);
+
+    htmlSaveSelection();
+
+    htmlFocus();
+
+}
+/*   Funciones de formato   */
+
+function htmlBold(){
+
+    htmlExec("bold");
+
+}
+
+function htmlItalic(){
+
+    htmlExec("italic");
+
+}
+
+function htmlUnderline(){
+
+    htmlExec("underline");
+
+}
+
+function htmlH1(){
+
+    htmlExec(
+
+        "formatBlock",
+
+        "H1"
+
+    );
+
+}
+
+function htmlH2(){
+
+    htmlExec(
+
+        "formatBlock",
+
+        "H2"
+
+    );
+
+}
+
+function htmlBulletList(){
+
+    htmlExec(
+
+        "insertUnorderedList"
+
+    );
+
+}
+
+function htmlNumberList(){
+
+    htmlExec(
+
+        "insertOrderedList"
+
+    );
+
+}
+
+function htmlRemoveFormat(){
+
+    htmlExec(
+
+        "removeFormat"
+
+    );
+
+}
+
+/*   Inserción HTML   */
+
+function htmlInsertHTML(html){
+
+    htmlRestoreSelection();
+
+    document.execCommand(
+        "insertHTML",
+        false,
+        html
+    );
+
+    htmlSaveSelection();
+
+    htmlFocus();
+
+    return true;
+
+}
+
+function htmlAlignLeft(){
+
+    htmlExec("justifyLeft");
+
+}
+
+function htmlAlignCenter(){
+
+    htmlExec("justifyCenter");
+
+}
+
+function htmlAlignRight(){
+
+    htmlExec("justifyRight");
+
+}
+
+function htmlJustify(){
+
+    htmlExec("justifyFull");
+
+}
+
+/*   Enlaces   */
+
+async function htmlInsertLink(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount){
+
+        dcAlert(
+
+            "Seleccione primero el texto que desea convertir en enlace."
+
+        );
+
+        return;
+
+    }
+
+    htmlSaveSelection();
+
+    const text = sel.toString().trim();
+
+    if(text===""){
+
+        dcAlert(
+
+            "Seleccione primero el texto que desea convertir en enlace."
+
+        );
+
+        return;
+
+    }
+
+    const url = await dcPrompt(
+
+        "Dirección del enlace:",
+
+        "https://"
+
+    );
+
+    if(!url)
+        return;
+
+    htmlInsertHTML(
+
+        '<a href="' +
+
+        url +
+
+        '" target="_blank">' +
+
+        text +
+
+        '</a>'
+
+    );
+
+}
+
+async function htmlInsertImage(){
+
+    const url = await dcPrompt(
+
+        "Dirección de la imagen:",
+
+        "https://"
+
+    );
+
+    if(!url)
+        return;
+
+    htmlInsertHTML(
+
+        '<p style="text-align:center;">' +
+
+            '<img ' +
+
+                'src="' + url + '" ' +
+
+                'alt="" ' +
+
+                'style="width:100%;height:auto;">' +
+
+        '</p>'
+
+    );
+
+}
+  
+</script>
+
+

@@ -1,0 +1,1 @@
+1. implementar validacion parametos de configuración NOTEMPTY BOOLEAN RANGE(min,max) LIST(...) "

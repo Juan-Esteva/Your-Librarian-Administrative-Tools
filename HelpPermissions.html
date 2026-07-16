@@ -1,0 +1,388 @@
+<!-- Ultimo guardado : 202607131950 -->
+<style>
+
+.permissionsTable{
+
+    border-collapse:collapse;
+
+    margin:0 0 12px 0;
+
+    font-family:Arial,sans-serif;
+
+    font-size:12px;
+
+    table-layout:fixed;
+
+    width:364px;
+
+}
+
+.permissionsTable th{
+
+    border:2px solid #555;
+
+    background:#f3f3f3;
+
+    text-align:center;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+    height:24px;
+
+    padding:2px;
+
+}
+
+.permissionsTable td{
+
+    border:2px solid #555;
+
+    text-align:center;
+
+    vertical-align:middle;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    height:24px;
+
+    padding:2px;
+
+}
+
+.permissionsGroupTitle{
+
+    display:block;
+
+    width:364px;
+
+    box-sizing:border-box;
+
+    background:#dff5ff;
+
+    padding:5px 10px;
+
+    margin:12px 0 2px 0;
+
+    font-family:Arial,sans-serif;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+}
+
+.permissionsCommand{
+
+    width:220px;
+
+    text-align:left !important;
+
+    padding-left:10px !important;
+
+    font-weight:bold;
+
+}
+  
+</style>
+
+
+<script>
+
+//
+// API pública
+//
+
+function insertPermissions(){
+
+    google.script.run
+
+        .withSuccessHandler(function(p){
+
+            helpInsertHTML(
+
+                buildPermissionsTable([{
+
+                    command : currentCommand,
+
+                    SU : p.SU,
+
+                    AD : p.AD,
+
+                    UL : p.UL,
+
+                    US : p.US
+
+                }],true)
+
+                +
+
+                "<p><br></p><p><br></p>"
+
+            );
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+
+                err.message,
+
+                "Permisos"
+
+            );
+
+        })
+
+        .YLGetCommandPermissions(currentCommand);
+
+}
+
+function insertPermissionsAll(){
+
+    google.script.run
+
+        .withSuccessHandler(function(list){
+
+            helpInsertHTML(
+
+                buildPermissionsGroups(list,true)
+
+                +
+
+                "<p><br></p><p><br></p>"
+
+            );
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+
+                err.message,
+
+                "Permisos"
+
+            );
+
+        })
+
+        .YLGetCommandsPermissions();
+
+}
+
+function insertPermissionsPublic(){
+
+    google.script.run
+
+        .withSuccessHandler(function(list){
+
+            helpInsertHTML(
+
+                buildPermissionsGroups(list,false)
+
+                +
+
+                "<p><br></p><p><br></p>"
+
+            );
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(
+
+                err.message,
+
+                "Permisos"
+
+            );
+
+        })
+
+        .YLGetCommandsPermissions();
+
+}
+
+//
+// Funciones privadas
+//
+
+function buildPermissionsGroups(list,showSU){
+
+    let html = [];
+
+    let title = "";
+    let commands = [];
+
+    function flush(){
+
+        if(commands.length===0)
+            return;
+
+        html.push(
+            '<div class="permissionsGroupTitle">'+
+                title+
+            '</div>'
+        );
+
+        html.push(
+            buildPermissionsTable(
+                commands,
+                showSU
+            )
+        );
+
+    }
+
+    list.forEach(function(item){
+
+        if(item.type==="COMMENT"){
+
+            flush();
+
+            title = item.title;
+            commands = [];
+
+            return;
+
+        }
+
+        if(
+            !showSU &&
+            item.SU &&
+            !item.AD &&
+            !item.UL &&
+            !item.US
+        ){
+            return;
+        }
+
+        commands.push(item);
+
+    });
+
+    flush();
+
+    return html.join("");
+
+  }
+
+function buildPermissionsTable(list,showSU){
+
+    if(list.length===0)
+        return "";
+
+    const dot = "&#10004;";
+
+    const tableWidth  = "364px";
+    const tableBorder = "1px solid #555";
+
+    let html = [];
+
+    html.push(
+        '<table border="1" cellspacing="0" cellpadding="4" '+
+        'style="border-collapse:collapse;'+
+        'border:'+tableBorder+';'+
+        'font-family:Arial,sans-serif;'+
+        'font-size:12px;'+
+        'width:'+tableWidth+';">'
+    );
+
+    //
+    // Cabecera
+    //
+
+    html.push("<tr>");
+
+    html.push(
+        '<th style="'+
+        'border:'+tableBorder+';'+
+        'background:#f3f3f3;'+
+        'text-align:left;'+
+        'padding:4px;'+
+        'width:220px;'+
+        'font-weight:bold;">'+
+        'Comando'+
+        '</th>'
+    );
+
+    if(showSU)
+        html.push(
+            '<th style="border:'+tableBorder+';background:#f3f3f3;padding:4px;text-align:center;font-weight:bold;">SU</th>'
+        );
+
+    html.push(
+        '<th style="border:'+tableBorder+';background:#f3f3f3;padding:4px;text-align:center;font-weight:bold;">AD</th>'
+    );
+
+    html.push(
+        '<th style="border:'+tableBorder+';background:#f3f3f3;padding:4px;text-align:center;font-weight:bold;">UL</th>'
+    );
+
+    html.push(
+        '<th style="border:'+tableBorder+';background:#f3f3f3;padding:4px;text-align:center;font-weight:bold;">US</th>'
+    );
+
+    html.push("</tr>");
+
+    //
+    // Comandos
+    //
+
+    list.forEach(function(cmd){
+
+        html.push("<tr>");
+
+        html.push(
+            '<td style="'+
+            'border:'+tableBorder+';'+
+            'padding:4px 8px;'+
+            'text-align:left;'+
+            'font-weight:bold;">'+
+            cmd.command+
+            '</td>'
+        );
+
+        if(showSU)
+            html.push(
+                '<td style="border:'+tableBorder+';padding:4px;text-align:center;font-weight:bold;">'+
+                (cmd.SU ? dot : "")+
+                '</td>'
+            );
+
+        html.push(
+            '<td style="border:'+tableBorder+';padding:4px;text-align:center;font-weight:bold;">'+
+            (cmd.AD ? dot : "")+
+            '</td>'
+        );
+
+        html.push(
+            '<td style="border:'+tableBorder+';padding:4px;text-align:center;font-weight:bold;">'+
+            (cmd.UL ? dot : "")+
+            '</td>'
+        );
+
+        html.push(
+            '<td style="border:'+tableBorder+';padding:4px;text-align:center;font-weight:bold;">'+
+            (cmd.US ? dot : "")+
+            '</td>'
+        );
+
+        html.push("</tr>");
+
+    });
+
+    html.push("</table>");
+
+    return html.join("");
+
+}
+  
+</script>

@@ -1,4 +1,5 @@
-<div id="helpContainer" style="display:none;height:70vh;">
+<!-- Ultimo guardado : 202607131950 -->
+<div id="helpContainer" style="display:none;height:100%;">
 
 <style>
 
@@ -158,60 +159,52 @@
 
 }
 
-.permissionsTable{
+#helpToolbar button{
 
-    border-collapse:collapse;
+    display:inline-flex;
 
-    margin:0 0 18px 0;
+    align-items:center;
 
-    font-family:Arial,sans-serif;
+    justify-content:center;
 
-    font-size:12px;
+    gap:4px;
 
-}
+    min-width:34px;
 
-.permissionsTable th{
+    height:32px;
 
-    width:36px;
+    padding:0 10px;
 
-    height:22px;
+    margin-right:5px;
 
-    border:2px solid #555;
+    border:1px solid #bdbdbd;
 
-    background:#f3f3f3;
+    border-radius:4px;
 
-    text-align:center;
+    background:#f8f8f8;
 
-    font-family:Arial,sans-serif;
+    cursor:pointer;
 
-    font-size:12px;
-
-    font-weight:bold;
-
-}
-
-.permissionsTable td{
-
-    width:36px;
-
-    height:26px;
-
-    border:2px solid #555;
-
-    text-align:center;
+    font-size:13px;
 
     vertical-align:middle;
 
-    font-family:Arial,sans-serif;
+}
 
-    font-size:14px;
+#helpToolbar button svg{
 
-    font-weight:bold;
+    display:block;
 
-    line-height:1;
+    flex:none;
 
 }
 
+#helpToolbar button:hover{
+
+    background:#e8f4ff;
+
+}
+  
 </style>
 
 <div id="helpLayout">
@@ -230,29 +223,7 @@
 
     <div id="helpEditorArea">
 
-        <div id="helpToolbar">
-
-        <button onclick="insertPermissions()">P</button>
-
-        <button onclick="exec('bold')"><b>B</b></button>
-
-        <button onclick="exec('italic')"><i>I</i></button>
-
-        <button onclick="exec('underline')"><u>U</u></button>
-
-        <button onclick="exec('formatBlock','H1')">H1</button>
-
-        <button onclick="exec('formatBlock','H2')">H2</button>
-
-        <button onclick="exec('insertUnorderedList')">• Lista</button>
-
-        <button onclick="exec('insertOrderedList')">1. Lista</button>
-
-        <button onclick="insertLink()">Link</button>
-
-        <button onclick="insertCode()">Código</button>
-
-        </div>
+        <div id="helpToolbar"></div>
 
         <div id="helpDocument" contenteditable="true"></div>
 
@@ -282,129 +253,502 @@
 
     let currentLanguage = null;
 
-    let savedRange = null;
-
     let currentMode = "HELP";
 
     let currentCommand = null;
   
 
-//
-// HelpEditorCode.js
-//
-
+/* HelpEditorCode.js */
 
 //
-// Inicialización
+// Motor del editor (autónomo)
 //
 
-function initHelpEditor(){
+const helpEditor = {
 
-    document.getElementById("contextToolbar").innerHTML =
+    editor : null,
 
-        '<button onclick="saveHelp()">Guardar</button>' +
+    savedRange : null
 
-        '<button onclick="insertTemplate()">Plantilla</button>' +
+};
 
-        '<button onclick="editTemplate()">Editar plantilla</button>' +
+function helpSetEditor(id){
 
-        '<span style="margin-left:24px;"> 🌐 </span>' +
+    helpEditor.editor = document.getElementById(id);
 
-        '<select ' +
-
-'id="languageSelector" ' +
-
-'onchange="changeLanguage(this.value)" ' +
-
-'style="width:80px;">' +
-
-'</select>';
-
-    google.script.run
-
-    .withSuccessHandler(function(language){
-
-        loadLanguageSelector(language);
-
-    })
-
-    .YLGetCurrentLanguage();
-  
-    google.script.run
-
-        .withSuccessHandler(function(commands){
-
-            buildCommandList(commands);
-
-            if(commands.length){
-
-                const first = document.querySelector(
-                    "#helpCommandsList .helpCommand"
-                );
-
-                if(first){
-
-                    first.click();
-
-                }
-
-            }
-
-        })
-
-        .withFailureHandler(function(err){
-
-            dcAlert(
-                err.message,
-                "Error cargando comandos"
-            );
-
-        })
-
-        .YLGetCommandList();
-
-        const editor = document.getElementById("helpDocument");
-
-        if(!editor.dataset.initialized){
-
-            editor.addEventListener("mouseup", saveSelection);
-
-            editor.addEventListener("keyup", saveSelection);
-
-            editor.addEventListener("mouseleave", saveSelection);
-
-            editor.dataset.initialized = "1";
-
-        }
+    return helpEditor.editor;
 
 }
 
-function saveSelection(){
+function helpGetEditor(){
+
+    return helpEditor.editor;
+
+}
+
+function helpFocus(){
+
+    if(helpEditor.editor)
+
+        helpEditor.editor.focus();
+
+}
+
+function helpSaveSelection(){
 
     const sel = window.getSelection();
 
-    if(sel.rangeCount){
+    if(!sel.rangeCount)
+        return false;
 
-        savedRange = sel.getRangeAt(0).cloneRange();
+    helpEditor.savedRange =
 
-    }
+        sel.getRangeAt(0).cloneRange();
+
+    return true;
 
 }
 
-function restoreSelection(){
+function helpRestoreSelection(){
 
-    if(!savedRange)
+    if(!helpEditor.savedRange)
         return false;
 
     const sel = window.getSelection();
 
     sel.removeAllRanges();
 
-    sel.addRange(savedRange);
+    sel.addRange(
+
+        helpEditor.savedRange
+
+    );
 
     return true;
 
 }
+
+function helpExec(cmd,value=null){
+
+    helpFocus();
+
+    if(helpEditor.savedRange){
+
+        const sel = window.getSelection();
+
+        sel.removeAllRanges();
+
+        sel.addRange(helpEditor.savedRange);
+
+    }
+
+    document.execCommand(
+
+        cmd,
+
+        false,
+
+        value
+
+    );
+
+    helpSaveSelection();
+
+    helpFocus();
+
+}
+
+function helpInsertHTML(html){
+
+    helpRestoreSelection();
+
+    document.execCommand(
+
+        "insertHTML",
+
+        false,
+
+        html
+
+    );
+
+    helpSaveSelection();
+
+    helpFocus();
+
+    return true;
+
+}
+
+function helpBold(){
+
+    helpExec("bold");
+
+}
+
+function helpItalic(){
+
+    helpExec("italic");
+
+}
+
+function helpUnderline(){
+
+    helpExec("underline");
+
+}
+
+function helpH1(){
+
+    helpExec(
+
+        "formatBlock",
+
+        "H1"
+
+    );
+
+}
+
+function helpH2(){
+
+    helpExec(
+
+        "formatBlock",
+
+        "H2"
+
+    );
+
+}
+
+function helpBulletList(){
+
+    helpExec(
+
+        "insertUnorderedList"
+
+    );
+
+}
+
+function helpNumberList(){
+
+    helpExec(
+
+        "insertOrderedList"
+
+    );
+
+}
+
+function helpAlignLeft(){
+
+    helpExec("justifyLeft");
+
+}
+
+function helpAlignCenter(){
+
+    helpExec("justifyCenter");
+
+}
+
+function helpAlignRight(){
+
+    helpExec("justifyRight");
+
+}
+
+function helpJustify(){
+
+    helpExec("justifyFull");
+
+}
+
+async function helpInsertLink(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount){
+
+        dcAlert(
+            "Seleccione primero el texto que desea convertir en enlace."
+        );
+
+        return;
+
+    }
+
+    helpSaveSelection();
+
+    const text = sel.toString().trim();
+
+    if(text===""){
+
+        dcAlert(
+            "Seleccione primero el texto que desea convertir en enlace."
+        );
+
+        return;
+
+    }
+
+    const url = await dcPrompt(
+
+        "Dirección del enlace:",
+
+        "https://"
+
+    );
+
+    if(!url)
+        return;
+
+    helpInsertHTML(
+
+        '<a href="' +
+
+        url +
+
+        '" target="_blank">' +
+
+        text +
+
+        '</a>'
+
+    );
+
+}
+
+function helpInsertCode(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount)
+        return;
+
+    const text = sel.toString();
+
+    helpInsertHTML(
+
+        "<pre><code>" +
+
+        text +
+
+        "</code></pre>"
+
+    );
+
+}
+
+
+/* Inicialización  */
+
+function initHelpEditor(){
+
+   helpSetEditor("helpDocument");
+
+    /*    Barra superior   */
+
+    document.getElementById("contextToolbar").innerHTML =
+
+        '<div style="display:flex;align-items:center;width:100%;">'+
+
+            '<div style="display:flex;gap:8px;">'+
+
+                '<button onclick="insertTemplate()">Plantilla</button>'+
+
+                '<button onclick="editTemplate()">Editar plantilla</button>'+
+
+                '<button onclick="clearHelp()">Borrar</button>'+
+
+            '</div>'+
+
+            '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'+
+
+                '<span>🌐</span>'+
+
+                '<select id="languageSelector" onchange="changeLanguage(this.value)" style="width:80px;"></select>'+
+
+                '<button onclick="saveHelp()">Guardar</button>'+
+
+            '</div>'+
+
+        '</div>';
+
+
+    /*   Barra del editor   */
+
+
+    const toolbar = document.getElementById("helpToolbar");
+
+    toolbar.innerHTML =
+
+        '<button onclick="insertPermissions()">P</button>' +
+
+        '<button onclick="insertPermissionsAll()">P*</button>' +
+
+        '<button onclick="insertPermissionsPublic()">P-</button>' +
+
+        '<button onclick="helpExec(\'bold\')"><b>B</b></button>' +
+
+        '<button onclick="helpExec(\'italic\')"><i>I</i></button>' +
+
+        '<button onclick="helpExec(\'underline\')"><u>U</u></button>' +
+
+        '<button onclick="helpH1()">H1</button>' +
+
+        '<button onclick="helpH2()">H2</button>' +
+
+        '<button onclick="helpBulletList()">•</button>' +
+
+        '<button onclick="helpNumberList()">1.</button>' +
+
+        '<button onclick="helpAlignLeft()" title="Alinear a la izquierda">'+
+'<svg width="18" height="18" viewBox="0 0 18 18">'+
+'<path d="M2 3H11M2 6H15M2 9H10M2 12H14M2 15H8" '+
+'stroke="#000" stroke-width="1.4" stroke-linecap="round"/>'+
+'</svg></button>' +
+
+        '<button onclick="helpAlignCenter()" title="Centrar">'+
+'<svg width="18" height="18" viewBox="0 0 18 18">'+
+'<path d="M4 3H14M2 6H16M4 9H14M2 12H16M5 15H13" '+
+'stroke="#000" stroke-width="1.4" stroke-linecap="round"/>'+
+'</svg></button>' +
+
+        '<button onclick="helpAlignRight()" title="Alinear a la derecha">'+
+'<svg width="18" height="18" viewBox="0 0 18 18">'+
+'<path d="M7 3H16M3 6H16M8 9H16M4 12H16M10 15H16" '+
+'stroke="#000" stroke-width="1.4" stroke-linecap="round"/>'+
+'</svg></button>' +
+
+        '<button onclick="helpJustify()" title="Justificar">'+
+'<svg width="18" height="18" viewBox="0 0 18 18">'+
+'<path d="M2 3H16M2 6H16M2 9H16M2 12H16M2 15H16" '+
+'stroke="#000" stroke-width="1.4" stroke-linecap="round"/>'+
+'</svg></button>' +
+
+        '<button onclick="helpInsertLink()">Link</button>' +
+
+        '<button onclick="helpInsertCode()">Código</button>' +
+      
+     '<button onclick="helpInsertResource()" title="Insertar recurso">'+
+
+'<svg width="16" height="16" viewBox="0 0 24 24" >'+
+'<path d="M16.5 6.5l-7.8 7.8a3 3 0 104.2 4.2l8.5-8.5a5 5 0 10-7.1-7.1L5.8 11.4" '+
+'fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+'</svg>'+
+
+'Recursos</button>' ;
+
+
+    /*   Inicialización del editor   */
+  
+    const editor = helpGetEditor();
+
+    if(!editor.dataset.initialized){
+
+        ["mouseup","keyup","mouseleave"].forEach(function(ev){
+
+            editor.addEventListener(ev,helpSaveSelection);
+
+        });
+
+        editor.dataset.initialized = "1";
+
+    }
+
+  
+    /*   Idioma   */
+    
+
+    google.script.run
+        .withSuccessHandler(loadLanguageSelector)
+        .withFailureHandler(function(err){
+            dcAlert(err.message,"Idioma");
+        })
+        .YLGetCurrentLanguage();
+
+    
+    /*   Comandos   */
+    
+
+    google.script.run
+        .withSuccessHandler(function(commands){
+
+            buildCommandList(commands);
+
+            if(commands.length){
+
+                const first=document.querySelector("#helpCommandsList .helpCommand");
+
+                if(first) first.click();
+
+            }
+
+        })
+        .withFailureHandler(function(err){
+
+            dcAlert(err.message,"Comandos");
+
+        })
+        .YLGetCommandList();
+
+}
+
+function clearHelp(){
+
+    if(currentMode==="TEMPLATE"){
+
+        dcConfirm(
+
+            "¿Desea borrar completamente la plantilla?",
+
+            function(){
+
+                document.getElementById("helpDocument").innerHTML="";
+
+                document.getElementById("helpDocument").focus();
+
+            }
+
+        );
+
+        return;
+
+    }
+
+    if(!currentCommand){
+
+        dcAlert("No hay ningún comando seleccionado.");
+
+        return;
+
+    }
+
+    dcConfirm(
+
+        '¿Desea borrar completamente la ayuda del comando "' +
+
+        currentCommand +
+
+        '"?',
+
+        function(){
+
+            document.getElementById("helpDocument").innerHTML="";
+
+            document.getElementById("helpDocument").focus();
+
+        }
+
+    );
+
+}
+
+
+
 //
 // Lista de comandos
 //
@@ -432,6 +776,75 @@ function buildCommandList(commands){
         panel.appendChild(div);
 
     });
+
+}
+
+/*    Idiomas    */
+
+
+function loadLanguageSelector(language){
+
+    currentLanguage = language || "ES";
+
+    const selector =
+
+        document.getElementById(
+            "languageSelector"
+        );
+
+    selector.innerHTML = "";
+
+    HELP_LANGUAGES.forEach(function(lang){
+
+        const option =
+
+            document.createElement("option");
+
+        option.value = lang;
+        option.textContent = lang;
+
+        if(lang===currentLanguage)
+            option.selected = true;
+
+        selector.appendChild(option);
+
+    });
+
+
+}
+
+
+
+function changeLanguage(language){
+
+    currentLanguage = language;
+
+    if(currentMode==="TEMPLATE"){
+
+        editTemplate();
+
+        return;
+
+    }
+
+    if(currentCommand){
+
+        const selected =
+
+            document.querySelector(
+                "#helpCommandsList .helpCommand.selected"
+            );
+
+        if(selected){
+
+            selectCommand(
+                currentCommand,
+                selected
+            );
+
+        }
+
+    }
 
 }
 
@@ -582,84 +995,39 @@ function saveHelp(){
 
 }
 
-function exec(cmd,value=null){
-
-    document.execCommand(
-        cmd,
-        false,
-        value
-    );
-
-    document.getElementById(
-        "helpDocument"
-    ).focus();
-
-}
-
-async function insertLink(){
-
-    const url = await dcPrompt(
-
-        "Dirección del enlace:",
-
-        "https://"
-
-    );
-
-    if(!url)
-        return;
-
-    const texto = await dcPrompt(
-
-        "Texto del enlace:",
-
-        url
-
-    );
-
-    if(!texto)
-        return;
-
-    insertHTMLAtCursor(
-
-        '<a href="' +
-
-        url +
-
-        '" target="_blank">' +
-
-        texto +
-
-        '</a>'
-
-    );
-
-}
   
-function insertCode(){
+function editTemplate(){
 
-    const sel = window.getSelection();
+    currentMode = "TEMPLATE";
 
-    if(!sel.rangeCount)
-        return;
+    google.script.run
 
-    const text = sel.toString();
+        .withSuccessHandler(function(html){
 
-    document.execCommand(
-        "insertHTML",
-        false,
-        "<pre><code>"+text+"</code></pre>"
-    );
+            document.getElementById("helpDocument").innerHTML = html;
+
+            setStatus("Editando plantilla");
+
+        })
+
+        .withFailureHandler(function(err){
+
+            dcAlert(err.message,"Plantilla");
+
+        })
+
+        .YLGetTemplate(currentLanguage);
 
 }
 
+  
 function insertTemplate(){
 
     google.script.run
 
         .withSuccessHandler(function(html){
 
-            insertHTMLAtCursor(html);
+            helpInsertHTML(html);
 
         })
 
@@ -676,176 +1044,105 @@ function insertTemplate(){
 
 }
 
-function insertHTMLAtCursor(html){
+function helpRemoveFormat(){
 
-    if(!restoreSelection())
-        return false;
+    helpExec(
 
-    const range = savedRange.cloneRange();
+        "removeFormat"
 
-    const fragment = range.createContextualFragment(html);
-
-    range.deleteContents();
-
-    range.insertNode(fragment);
-
-    saveSelection();
-
-    document.getElementById("helpDocument").focus();
-
-    return true;
+    );
 
 }
 
-function insertPermissions(){
+function helpInsertParagraph(){
 
-    if(!currentCommand){
+    helpExec(
+
+        "insertParagraph"
+
+    );
+
+}
+
+async function helpInsertResource(){
+
+    const type = await dcList(
+        "Insertar recurso",
+        [
+            "Imagen",
+            "Documento",
+            "Audio",
+            "Video"
+        ]
+    );
+
+    if(!type) return;
+
+    google.script.run
+        .withSuccessHandler(showResourceBrowser)
+        .FMListResources(type);
+
+}
+
+function showResourceBrowser(list){
+
+    if(!list || list.length===0){
 
         dcAlert(
-            "No hay ningún comando seleccionado."
+            "La carpeta no contiene recursos."
         );
 
         return;
 
     }
 
-    google.script.run
+    let html =
 
-        .withSuccessHandler(function(p){
+        '<div style="max-height:350px;overflow:auto;">';
 
-            const dot = "✓";
-          
-            const html =
+    list.forEach(function(f,i){
 
-                '<table class="permissionsTable">' +
+        html +=
 
-                '<tr>' +
+            '<div class="fmItem" '+
 
-                    '<th>SU</th>' +
+            'onclick="FMSelect('+i+')" '+
 
-                    '<th>AD</th>' +
+            'style="padding:6px;border-bottom:1px solid #ddd;cursor:pointer;">'+
 
-                    '<th>UL</th>' +
+            '<b>'+f.name+'</b><br>'+
 
-                    '<th>US</th>' +
+            '<span style="font-size:11px;color:#666;">'+
 
-                '</tr>' +
+            Math.round(f.size/1024)+' KB'+
 
-                '<tr>' +
+            '</span>'+
 
-                    '<td>' + (p.SU ? dot : "") + '</td>' +
-
-                    '<td>' + (p.AD ? dot : "") + '</td>' +
-
-                    '<td>' + (p.UL ? dot : "") + '</td>' +
-
-                    '<td>' + (p.US ? dot : "") + '</td>' +
-
-                '</tr>' +
-
-                '</table>';
-
-            insertHTMLAtCursor(html + "<p><br></p><p><br></p>");
-
-        })
-
-        .withFailureHandler(function(err){
-
-            dcAlert(
-                err.message,
-                "Permisos"
-            );
-
-        })
-
-        .YLGetCommandPermissions(currentCommand);
-
-}
-
-function loadLanguageSelector(defaultLanguage){
-
-    currentLanguage = defaultLanguage;
-
-    const sel = document.getElementById("languageSelector");
-
-    sel.innerHTML = "";
-
-    HELP_LANGUAGES.forEach(function(lang){
-
-        const option = document.createElement("option");
-
-        option.value = lang;
-
-        option.textContent = lang;
-
-        option.selected = (lang === defaultLanguage);
-
-        sel.appendChild(option);
+            '</div>';
 
     });
 
-}
+    html += '</div>';
 
-function changeLanguage(language){
+    window.fmList = list;
 
-    currentLanguage = language;
+    dcDialog(
 
-    if(currentCommand){
+        "Recursos",
 
-        const selected = document.querySelector(
-            "#helpCommandsList .helpCommand.selected"
-        );
+        html
 
-        if(selected){
-
-            selectCommand(
-                currentCommand,
-                selected
-            );
-
-        }
-
-    }
+    );
 
 }
 
-function editTemplate(){
+function FMSelect(index){
 
-    google.script.run
+    const f = window.fmList[index];
 
-        .withSuccessHandler(function(html){
-
-            currentMode = "TEMPLATE";
-
-            currentCommand = null;
-
-            document
-                .querySelectorAll("#helpCommandsList .helpCommand")
-                .forEach(item=>item.classList.remove("selected"));
-
-            document.getElementById("helpDocument").innerHTML = html;
-
-            setStatus(
-                "Editando plantilla (" +
-                currentLanguage +
-                ")"
-            );
-
-        })
-
-        .withFailureHandler(function(err){
-
-            dcAlert(
-                err.message,
-                "Plantilla"
-            );
-
-        })
-
-        .YLGetTemplate(currentLanguage);
+    console.log(f);
 
 }
-
-
   
+
 </script>

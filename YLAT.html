@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Ultimo guardado : 202607141940 -->
 <html>
 
 <head>
@@ -151,11 +152,6 @@ margin-bottom:8px;
 
     margin-bottom:8px;
 
-}
-
-
-#contextToolbar{
-
     display:flex;
 
     align-items:center;
@@ -168,43 +164,41 @@ margin-bottom:8px;
 
 #workArea{
 
-    min-height:70vh;
+    height:70vh;
 
     position:relative;
+
+    overflow:hidden;
 
 }
 
 #idleLogo{
 
+    display:none;
+
     position:absolute;
 
     inset:0;
-
-    display:flex;
 
     justify-content:center;
 
     align-items:center;
 
+    overflow:hidden;
+
     pointer-events:none;
 
-    z-index:10;      /* antes era 0 */
 }
 
 #idleLogo img{
 
-    width:500px;
+    max-width:80%;
 
-    opacity:.25;  /*  .08  muy tenue   
-                      .15  tenue        */
-}
+    max-height:80%;
 
+    object-fit:contain;
 
-#tableContainer{
-
-    position:relative;
-
-    z-index:1;
+    opacity:.15;
 
 }
 
@@ -233,7 +227,7 @@ background:#f0f0f0;
 
 #tableContainer{
 
-height:70vh;
+height:100%;
 
 overflow:auto;
 
@@ -242,6 +236,10 @@ border:1px solid #ccc;
 border-radius:10px;
 
 background:white;
+
+position:relative;
+
+z-index:1;
 
 }
 
@@ -467,8 +465,7 @@ Your Librarian
 
 <img
 id="logo"
-src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w200"
-  >
+src="">
 
 <div id="titleBlock">
 
@@ -494,6 +491,8 @@ Your Librarian
         Herramientas
     </button>
 
+  
+
 </div>
 
 <div id="contextToolbar">
@@ -504,13 +503,16 @@ Your Librarian
 
     <div id="idleLogo">
 
-        <img src="https://drive.google.com/thumbnail?id=1b3yCFi8EEVIuVI667UTVQ4zWJrDM-5XB&sz=w400">
+        <img src="">
 
     </div>
-
+      
+    <?!= include('RTE'); ?>
     <?!= include('TableEditor'); ?>
     <?!= include('HelpEditor'); ?>
-
+    <?!= include("HelpPermissions"); ?>
+    <?!= include('NewsEditor'); ?>
+    
 </div>
 
 <div id="footer">
@@ -531,33 +533,71 @@ const modules = {
 
     tables : {
 
+        initialized : true,
+
         container : "tableContainer",
 
         init : function(){},
 
         show : function(){
 
-            document.getElementById("tableContainer").style.display="block";
+            document.getElementById("tableContainer").style.display = "block";
 
         }
 
     },
 
-    help : {
+    tools : {
 
-    container : "helpContainer",
+    initialized : true,
 
-    init : function(){
+    container : null,
 
-        initHelpEditor();
-
-    },
+    init : function(){},
 
     show : function(){
 
-        document.getElementById("helpContainer").style.display="block";
+        document.getElementById("contextToolbar").innerHTML =
+
+            '<button onclick="showHelpEditor()">Editor de Ayuda</button>' +
+
+            '<button onclick="activateModule(\'news\');setStatus(\'Editor de Novedades\');">Editor de Novedades</button>';
+
+        document.getElementById("idleLogo").style.display = "flex";
 
     }
+
+},
+
+    help : {
+
+        initialized : false,
+
+        container : "helpContainer",
+
+        init : initHelpEditor,
+
+        show : function(){
+
+            document.getElementById("helpContainer").style.display = "block";
+
+        }
+
+    },
+
+    news : {
+
+        initialized : false,
+
+        container : "newsContainer",
+
+        init : initNewsEditor,
+
+        show : function(){
+
+            document.getElementById("newsContainer").style.display = "block";
+
+        }
 
     }
 
@@ -573,24 +613,76 @@ const VERSION = {
 
 };
 
+function initInterface(){
+
+    google.script.run
+
+        .withSuccessHandler(function(cfg){
+
+            const logo =
+                "https://drive.google.com/thumbnail?id=" +
+                cfg.logoFileId +
+                "&sz=w200";
+
+            const background =
+                "https://drive.google.com/thumbnail?id=" +
+                cfg.backgroundFileId +
+                "&sz=w700";
+
+            document.getElementById("logo").src =
+                logo;
+
+            document.querySelector("#idleLogo img").src =
+                background;
+
+        })
+
+        .YLGetInterfaceConfig();
+
+}
+
 function activateModule(name){
 
-    Object.values(modules).forEach(m=>{
+    Object.values(modules).forEach(function(m){
 
-        document.getElementById(m.container).style.display="none";
+        if(m.container){
+
+            document.getElementById(m.container).style.display = "none";
+
+        }
 
     });
 
-    document.getElementById("idleLogo").style.display="none";
+    document.getElementById("idleLogo").style.display = "none";
 
     currentModule = modules[name];
 
-    currentModule.init();
+    if(name==="help"){
+
+        initHelpEditor();
+
+        modules.help.initialized = true;
+
+    }
+    else if(name==="news"){
+
+        initNewsEditor();
+
+        modules.news.initialized = true;
+
+    }
+    else if(!currentModule.initialized){
+
+        currentModule.init();
+
+        currentModule.initialized = true;
+
+    }
 
     currentModule.show();
 
 }
-
+  
 function setStatus(msg,busy=false){
 
     const status = document.getElementById("status");
@@ -629,18 +721,11 @@ function showTables(){
 
 function showTools(){
 
-    document.getElementById("tableContainer").style.display = "none";
-    document.getElementById("helpContainer").style.display  = "none";
-    document.getElementById("idleLogo").style.display       = "flex";
-
-    document.getElementById("contextToolbar").innerHTML =
-
-        '<button onclick="showHelpEditor()">Editor de Ayuda</button>';
+    activateModule("tools");
 
     setStatus("Herramientas");
 
 }
-
 
 function showHelpEditor(){
 
@@ -649,6 +734,34 @@ function showHelpEditor(){
     setStatus("Editor de Ayuda");
 
 }
+
+/*   Pantalla inicial   */
+
+function showHome(){
+
+    Object.values(modules).forEach(function(m){
+
+        if(m.container){
+
+            document.getElementById(m.container).style.display="none";
+
+        }
+
+    });
+
+    document.getElementById("contextToolbar").innerHTML="";
+
+    document.getElementById("idleLogo").style.display="flex";
+
+    currentModule = null;
+
+    setStatus("Listo");
+
+}
+
+initInterface();
+
+showHome();
   
 </script>
 

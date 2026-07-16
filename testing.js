@@ -28,3 +28,31 @@ function TestSaveHelp(){
     );
 
 }
+
+/*          Diagnóstico         */
+
+function TestConfig(){
+
+    LoadConfig();
+
+    Logger.log("=== CONFIG ===");
+
+    Object.keys(CONFIG)
+
+        .sort()
+
+        .forEach(function(key){
+
+            Logger.log(
+
+                key +
+
+                " = " +
+
+                CONFIG[key]
+
+            );
+
+        });
+
+}

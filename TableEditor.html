@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Ultimo guardado : 202607131950 -->
 <html>
 
 <head>
@@ -55,7 +56,11 @@ background:#f0f0f0;
 
     display:none;
 
-    height:70vh;
+    position:relative;
+
+    z-index:1000;
+
+    height:100%;
 
     overflow:auto;
 
@@ -152,7 +157,7 @@ padding:0;
 
 }
 
-
+/*
 
 select{
 
@@ -167,6 +172,22 @@ background:transparent;
 box-sizing:border-box;
 
 font:inherit;
+
+}
+
+  */
+
+select{
+
+    width:100%;
+    min-height:28px;
+
+    background:white;
+
+    border:1px solid #ccc;
+
+    appearance:auto;
+    -webkit-appearance:menulist;
 
 }
 
@@ -233,7 +254,10 @@ min-width:260px;
     letter-spacing:.3px;
 
 }
-  
+
+#idleLogo{
+    display:none;
+}
 
 </style>
   
