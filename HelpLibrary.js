@@ -297,63 +297,115 @@ function YLGetCommandList(){
 
 function FMListResources(type){
 
-    const cfg = LoadConfig();
-
     let folderId;
 
     switch(type){
 
-        case "Imagen":
-            folderId = cfg.publicImagesFolderId;
+        case "IMAGE":
+            folderId = GetConfig("publicImagesFolderId");
             break;
 
-        case "Documento":
-            folderId = cfg.publicDocumentsFolderId;
+        case "DOCUMENT":
+            folderId = GetConfig("publicDocumentsFolderId");
             break;
 
-        case "Audio":
-            folderId = cfg.publicAudioFolderId;
+        case "AUDIO":
+            folderId = GetConfig("publicAudioFolderId");
             break;
 
-        case "Video":
-            folderId = cfg.publicVideoFolderId;
+        case "VIDEO":
+            folderId = GetConfig("publicVideoFolderId");
             break;
 
         default:
-            return [];
+            throw new Error(
+                "Tipo de recurso no soportado: " + type
+            );
+
+    }
+
+    if(!folderId){
+
+        throw new Error(
+            "No está configurada la carpeta para el tipo de recurso: " + type
+        );
 
     }
 
     const folder = DriveApp.getFolderById(folderId);
-
-    const files = folder.getFiles();
-
+    const files  = folder.getFiles();
     const result = [];
 
     while(files.hasNext()){
 
         const f = files.next();
 
+        YLInfo(
+            "SYSTEM",
+            "FM",
+            "FMListResources",
+            "Archivo  : " + f.getName()
+        );
+
+        /*
+            IMPORTANTE
+
+            No devolver objetos Date mediante google.script.run.
+
+            Apps Script no serializa correctamente Date dentro de
+            arrays de objetos y el cliente recibe NULL.
+
+            Siempre convertir las fechas a String mediante
+            Utilities.formatDate().
+        */
+
         result.push({
 
             id   : f.getId(),
-
             name : f.getName(),
-
             mime : f.getMimeType(),
-
             size : f.getSize(),
+            // URL para abrir el recurso
+            url  : f.getUrl(),
+            // URL para visualizar imágenes
+            imageUrl :
 
-            date : f.getLastUpdated(),
-
-            url  : f.getUrl()
+                "https://drive.google.com/thumbnail?id=" +
+                f.getId() +
+                "&sz=w1600",
+            thumbnail :
+                "https://drive.google.com/thumbnail?id="+
+                f.getId()+
+                "&sz=w256",
+            date : Utilities.formatDate(
+                f.getLastUpdated(),
+                Session.getScriptTimeZone(),
+                "yyyy-MM-dd HH:mm:ss"
+            )
 
         });
 
+
     }
+
+    result.sort((a, b) =>
+        a.name.localeCompare(
+            b.name,
+            undefined,
+            {
+                sensitivity: "base",
+                numeric: true
+            }
+        )
+    );
+
+    YLInfo(
+      "SYSTEM",
+      "FM",
+      "FMListResources",
+      "Total recursos: " + result.length
+    );
 
     return result;
 
 }
-
-

@@ -204,6 +204,57 @@
     background:#e8f4ff;
 
 }
+
+#statusBar{
+
+    height:22px;
+    line-height:22px;
+    padding-left:8px;
+    font-size:12px;
+
+}
+
+.statusBusy{
+
+    color:#0066cc;
+    font-weight:bold;
+    animation:blink 1s linear infinite;
+
+}
+
+@keyframes blink{
+
+    50%{
+
+        opacity:.25;
+
+    }
+
+}
+
+#imageSizer{
+
+    position:absolute;
+
+    background:white;
+
+    border:1px solid #999;
+
+    border-radius:8px;
+
+    padding:8px;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+
+    z-index:1000;
+
+}
+
+#imageSizer input{
+
+    width:220px;
+
+}
   
 </style>
 
@@ -256,7 +307,7 @@
     let currentMode = "HELP";
 
     let currentCommand = null;
-  
+ 
 
 /* HelpEditorCode.js */
 
@@ -379,6 +430,7 @@ function helpInsertHTML(html){
     return true;
 
 }
+
 
 function helpBold(){
 
@@ -659,10 +711,8 @@ function initHelpEditor(){
 
     }
 
-  
     /*   Idioma   */
     
-
     google.script.run
         .withSuccessHandler(loadLanguageSelector)
         .withFailureHandler(function(err){
@@ -673,7 +723,6 @@ function initHelpEditor(){
     
     /*   Comandos   */
     
-
     google.script.run
         .withSuccessHandler(function(commands){
 
@@ -1064,71 +1113,164 @@ function helpInsertParagraph(){
 
 }
 
-async function helpInsertResource(){
+const RESOURCE_TYPES = [
+
+    {
+        id   : "IMAGE",
+        text : "🖼 Imágenes"
+    },
+
+    {
+        id   : "DOCUMENT",
+        text : "📄 Documentos"
+    },
+
+    {
+        id   : "AUDIO",
+        text : "🎵 Audio"
+    },
+
+    {
+        id   : "VIDEO",
+        text : "🎬 Vídeo"
+    }
+
+];
+
+
+  async function helpInsertResource(){
+
+    helpSaveSelection();
 
     const type = await dcList(
+
         "Insertar recurso",
-        [
-            "Imagen",
-            "Documento",
-            "Audio",
-            "Video"
-        ]
+
+        RESOURCE_TYPES
+
     );
 
     if(!type) return;
 
-    google.script.run
-        .withSuccessHandler(showResourceBrowser)
-        .FMListResources(type);
+    setStatus(
+    "📂 Explorando Google Drive...",
+    true
+);
 
-}
+google.script.run
 
+    .withSuccessHandler(function(result){
+
+        setStatus("Editor de Ayuda");
+
+        showResourceBrowser(result);
+
+    })
+
+    .withFailureHandler(function(err){
+
+        setStatus("Editor de Ayuda");
+
+        dcAlert(err.message);
+
+    })
+
+    .FMListResources(type);
+
+  }
+  
 function showResourceBrowser(list){
 
     if(!list || list.length===0){
 
         dcAlert(
-            "La carpeta no contiene recursos."
+            "La carpeta no contiene recursos.",
+            "Administrador de Recursos"
         );
 
         return;
 
     }
 
+    window.fmList = list;
+
     let html =
 
-        '<div style="max-height:350px;overflow:auto;">';
+        '<div style="'+
+            'max-height:420px;'+
+            'overflow-y:auto;'+
+            'overflow-x:auto;'+
+        '">'+
+
+        '<table style="'+
+            'border-collapse:collapse;'+
+            'width:max-content;'+
+            'min-width:100%;'+
+        '">';
+
+    html +=
+
+        '<tr style="background:#eef7fc;">'+
+
+            '<th style="'+
+                'text-align:left;'+
+                'padding:6px 10px;'+
+                'white-space:nowrap;'+
+            '">'+
+                'Nombre'+
+            '</th>'+
+
+            '<th style="'+
+                'width:120px;'+
+                'text-align:right;'+
+                'padding:6px 10px;'+
+                'white-space:nowrap;'+
+            '">'+
+                'Tamaño'+
+            '</th>'+
+
+        '</tr>';
 
     list.forEach(function(f,i){
 
         html +=
 
-            '<div class="fmItem" '+
+            '<tr '+
+                'onclick="FMSelect('+i+')" '+
+                'style="cursor:pointer;">'+
 
-            'onclick="FMSelect('+i+')" '+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'border-bottom:1px solid #ddd;'+
+                    'white-space:nowrap;'+
+                '">'+
+                    f.name+
+                '</td>'+
 
-            'style="padding:6px;border-bottom:1px solid #ddd;cursor:pointer;">'+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'text-align:right;'+
+                    'border-bottom:1px solid #ddd;'+
+                    'white-space:nowrap;'+
+                '">'+
+                    Math.round(f.size/1024)+
+                    ' KB'+
+                '</td>'+
 
-            '<b>'+f.name+'</b><br>'+
-
-            '<span style="font-size:11px;color:#666;">'+
-
-            Math.round(f.size/1024)+' KB'+
-
-            '</span>'+
-
-            '</div>';
+            '</tr>';
 
     });
 
-    html += '</div>';
+    html +=
 
-    window.fmList = list;
+        '</table>'+
+        '</div>';
 
     dcDialog(
 
-        "Recursos",
+        "Administrador de Recursos (" +
+        list.length +
+        ")",
 
         html
 
@@ -1140,9 +1282,177 @@ function FMSelect(index){
 
     const f = window.fmList[index];
 
-    console.log(f);
+    let html;
+
+    if(f.mime.startsWith("image/")){
+
+        html =
+
+            '<img '+
+                'src="'+f.imageUrl+'" '+
+                'alt="'+f.name+'" '+
+                'title="'+f.name+'" '+
+                'style="'+
+                    'display:block;'+
+                    'margin:12px auto;'+
+                    'max-width:100%;'+
+                    'height:auto;'+
+                '">';
+
+    }
+    else{
+
+        let icon = "📎";
+
+        if(f.mime.startsWith("audio/"))
+
+            icon = "🎵";
+
+        else if(f.mime.startsWith("video/"))
+
+            icon = "🎬";
+
+        else if(
+
+            f.mime.indexOf("pdf") >= 0 ||
+
+            f.mime.indexOf("document") >= 0 ||
+
+            f.mime.indexOf("sheet") >= 0 ||
+
+            f.mime.indexOf("presentation") >= 0 ||
+
+            f.mime.indexOf("text") >= 0
+
+        )
+
+            icon = "📄";
+
+        html =
+
+            '<a '+
+                'href="'+f.url+'" '+
+                'target="_blank" '+
+                'title="'+f.name+'">'+
+                icon+' '+f.name+
+            '</a>';
+
+    }
+
+    dcCloseDialog();
+
+    setTimeout(function(){
+
+        helpFocus();
+      /*
+
+        helpRestoreSelection();
+
+        helpInsertHTML(html);
+
+      */
+      const editor = helpGetEditor();
+
+      editor.focus();
+
+      editor.innerHTML += html;
+
+    },0);
 
 }
-  
+
+/*
+
+function FMSelect(index){
+
+    const f = window.fmList[index];
+
+    let html;
+    // Construir el HTML según el tipo de recurso
+    if(f.mime.startsWith("image/")){
+
+    html =
+
+        '<img '+
+            'src="'+f.imageUrl+'" '+
+            'alt="'+f.name+'" '+
+            'title="'+f.name+'" '+
+            'style="'+
+                'display:block;'+
+                'margin:12px auto;'+
+                'width:100%;'+
+                'max-width:100%;'+
+                'height:auto;'+
+            '">';
+
+    }
+    else{
+
+        let icon = "[DOC] ";
+
+        if(f.mime.startsWith("audio/"))
+
+            icon = "[AUDIO] ";
+
+        else if(f.mime.startsWith("video/"))
+
+            icon = "[VIDEO] ";
+
+        else if(
+
+            f.mime.indexOf("pdf")>=0 ||
+
+            f.mime.indexOf("document")>=0 ||
+
+            f.mime.indexOf("sheet")>=0 ||
+
+            f.mime.indexOf("presentation")>=0 ||
+
+            f.mime.indexOf("text")>=0
+
+        )
+
+            icon = "[DOC] ";
+
+        html =
+
+            '<a '+
+                'href="'+f.url+'" '+
+                'target="_blank" '+
+                'title="'+f.name+'">'+
+
+                icon+' '+f.name+
+
+            '</a>';
+
+    }
+
+    //
+    // Cerrar el selector
+    //
+
+    dcCloseDialog();
+
+const editor = helpGetEditor();
+
+editor.focus();
+
+helpRestoreSelection();
+
+setTimeout(function(){
+
+    document.execCommand(
+        "insertHTML",
+        false,
+        html
+    );
+
+    helpSaveSelection();
+
+},50);
+
+}
+
+*/
 
 </script>

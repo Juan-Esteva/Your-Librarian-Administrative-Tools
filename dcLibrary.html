@@ -240,24 +240,21 @@ function dcList(title,items){
 
         let html = "";
 
-        items.forEach(function(item){
+        items.forEach(function(item,index){
 
             html +=
 
                 '<div class="dcListItem" '+
                 'style="padding:8px;border-bottom:1px solid #ddd;cursor:pointer;" '+
-                'onclick="dcListSelect(\''+
+                'onclick="dcListSelect('+index+')">'+
 
-                item.replace(/'/g,"\\'")+
-
-                '\')">'+
-
-                item+
+                item.text+
 
                 '</div>';
 
         });
 
+        window.dcListItems   = items;
         window.dcListResolve = resolve;
 
         dcDialog(title,html);
@@ -266,19 +263,23 @@ function dcList(title,items){
 
 }
 
-function dcListSelect(value){
+function dcListSelect(index){
+
+    const item = window.dcListItems[index];
 
     dcCloseDialog();
 
     if(window.dcListResolve){
 
-        window.dcListResolve(value);
+        window.dcListResolve(item.id);
 
         window.dcListResolve = null;
+        window.dcListItems   = null;
 
     }
 
 }
+
 
 
 </script>
