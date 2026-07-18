@@ -3,6 +3,10 @@
 
 /*     Help     */
 
+const DEFAULT_HELP_TEMPLATE = `
+<!-- Pegar aquí exactamente el contenido original de template.ES.html -->
+`;
+
 function BuildHelpFileName(language){
 
     language = (language || "ES").toUpperCase();
@@ -407,5 +411,41 @@ function FMListResources(type){
     );
 
     return result;
+
+}
+
+function YLRestoreTemplate(language){
+
+    language = language || GetConfig("language");
+
+    const folder = DriveApp.getFolderById(
+
+        GetConfig("helpFolderId")
+
+    );
+
+    const defaults = folder.getFilesByName("template.DEFAULT.html");
+
+    if(!defaults.hasNext())
+
+        throw new Error(
+
+            "No existe template.DEFAULT.html"
+
+        );
+
+    const html = defaults
+
+        .next()
+
+        .getBlob()
+
+        .getDataAsString("UTF-8");
+
+    const file = ResolveTemplateFile(language);
+
+    file.setContent(html);
+
+    return html;
 
 }
