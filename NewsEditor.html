@@ -198,7 +198,7 @@ toolbar.innerHTML =
 
     '<button onclick="htmlInsertLink()">Link</button>' +
 
-    '<button onclick="htmlInsertImage()">Img</button>';
+    '<button onclick="newsInsertResource()">Recursos</button>';
 
     if(!editor.dataset.initialized){
 
@@ -404,5 +404,249 @@ function deleteNews(){
 
 }
 
+  function newsInsertResource(){
+
+    newsShowResourceBrowser();
+
+  }
+
+
+  function newsShowResourceBrowser(){
+
+    const html =
+
+    '<div style="display:flex;flex-direction:column;height:100%;padding:10px;box-sizing:border-box;">'+
+
+        '<div style="margin-bottom:10px;">'+
+
+            '<button onclick="newsChangeResourceType(\'IMAGE\')">Imágenes</button> '+
+
+            '<button onclick="newsChangeResourceType(\'DOCUMENT\')">Documentos</button> '+
+
+            '<button onclick="newsChangeResourceType(\'AUDIO\')">Audio</button> '+
+
+            '<button onclick="newsChangeResourceType(\'VIDEO\')">Video</button>'+
+
+        '</div>'+
+
+        '<div '+
+            'id="newsResourceList" '+
+            'style="'+
+                'flex:1;'+
+                'border:1px solid #bdbdbd;'+
+                'border-radius:4px;'+
+                'overflow:auto;'+
+                'padding:8px;'+
+                'background:#fff;'+
+            '">'+
+
+            '<div style="color:#777;padding:12px;">'+
+                'Seleccione una categoría.'+
+            '</div>'+
+
+        '</div>'+
+
+    '</div>';
+
+    dcDialog(
+
+        "Administrador de Recursos",
+
+        html,
+
+        {
+
+            width : 760,
+
+            height : 520
+
+        }
+
+    );
+
+  }
+
+  function newsChangeResourceType(type){
+
+    const panel = document.getElementById("newsResourceList");
+
+    panel.innerHTML =
+
+        '<div style="padding:20px;text-align:center;color:#666;">'+
+        'Cargando recursos...'+
+        '</div>';
+
+    google.script.run
+
+        .withSuccessHandler(function(list){
+
+            newsShowResourceList(list);
+
+        })
+
+        .withFailureHandler(function(err){
+
+            panel.innerHTML =
+
+                '<div style="padding:20px;color:#b00020;">'+
+
+                    err.message+
+
+                '</div>';
+
+        })
+
+        .FMListResources(type);
+
+  }
+
+  function newsShowResourceList(list){
+
+    const panel =
+
+        document.getElementById("newsResourceList");
+
+    if(!list || list.length===0){
+
+        panel.innerHTML =
+
+            '<div style="padding:20px;color:#666;">'+
+
+                'La carpeta no contiene recursos.'+
+
+            '</div>';
+
+        return;
+
+    }
+
+    window.newsResourceList = list;
+
+    let html =
+
+        '<table style="'+
+            'width:100%;'+
+            'border-collapse:collapse;'+
+        '">';
+
+    html +=
+
+        '<tr style="background:#eef7fc;">'+
+
+            '<th style="text-align:left;padding:6px 10px;">'+
+                'Nombre'+
+            '</th>'+
+
+            '<th style="width:110px;text-align:right;padding:6px 10px;">'+
+                'Tamaño'+
+            '</th>'+
+
+        '</tr>';
+
+    list.forEach(function(f,index){
+
+        html +=
+
+            '<tr '+
+                'onclick="newsSelectResource('+index+')" '+
+                'style="cursor:pointer;">'+
+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'border-bottom:1px solid #ddd;">'+
+
+                    f.name+
+
+                '</td>'+
+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'text-align:right;'+
+                    'border-bottom:1px solid #ddd;">'+
+
+                    Math.round(f.size/1024)+' KB'+
+
+                '</td>'+
+
+            '</tr>';
+
+    });
+
+    html += '</table>';
+
+    panel.innerHTML = html;
+
+  }
+
+  function newsSelectResource(index){
+
+    const f = window.newsResourceList[index];
+
+    const html = newsBuildResourceHTML(f);
+
+    dcCloseDialog();
+
+    setTimeout(function(){
+
+        htmlFocus();
+
+        if(!htmlInsertHTML(html)){
+
+            const editor = htmlGetEditor();
+
+            editor.focus();
+
+            editor.innerHTML += html;
+
+        }
+
+    },0);
+
+  }
+
+  function newsBuildResourceHTML(f){
+
+    if(f.mime.startsWith("image/")){
+
+        return  '<img '+
+                    'src="'+f.imageUrl+'" '+
+                    'alt="'+f.name+'" '+
+                    'title="'+f.name+'" '+
+                    'style="'+
+                        'display:block;'+
+                        'margin:12px auto;'+
+                        'max-width:100%;'+
+                        'height:auto;'+
+                    '">';
+    }
+
+    let icon="[FILE] ";
+
+    if(f.mime.startsWith("audio/"))
+
+        icon="[AUDIO] ";
+
+    else if(f.mime.startsWith("video/"))
+
+        icon="[VIDEO] ";
+
+    else
+
+        icon="[DOC] ";
+
+    return  '<a '+
+                'href="'+f.url+'" '+
+                'target="_blank" '+
+                'title="'+f.name+'">'+
+
+                icon+" "+f.name+
+
+            '</a>';
+
+  }
+
+  
+  
+  
 </script>
 
