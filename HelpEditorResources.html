@@ -1,0 +1,225 @@
+<script>
+
+async function helpInsertResource(){
+
+    helpSaveSelection();
+
+    const type = await dcList(
+
+        "Insertar recurso",
+
+        RESOURCE_TYPES
+
+    );
+
+    if(!type) return;
+
+    setStatus(
+    "📂 Explorando Google Drive...",
+    true
+);
+
+google.script.run
+
+    .withSuccessHandler(function(result){
+
+        setStatus("Editor de Ayuda");
+
+        showResourceBrowser(result);
+
+    })
+
+    .withFailureHandler(function(err){
+
+        setStatus("Editor de Ayuda");
+
+        dcAlert(err.message);
+
+    })
+
+    .FMListResources(type);
+
+  }
+  
+function showResourceBrowser(list){
+
+    if(!list || list.length===0){
+
+        dcAlert(
+            "La carpeta no contiene recursos.",
+            "Administrador de Recursos"
+        );
+
+        return;
+
+    }
+
+    window.fmList = list;
+
+    let html =
+
+        '<div style="'+
+            'max-height:420px;'+
+            'overflow-y:auto;'+
+            'overflow-x:auto;'+
+        '">'+
+
+        '<table style="'+
+            'border-collapse:collapse;'+
+            'width:max-content;'+
+            'min-width:100%;'+
+        '">';
+
+    html +=
+
+        '<tr style="background:#eef7fc;">'+
+
+            '<th style="'+
+                'text-align:left;'+
+                'padding:6px 10px;'+
+                'white-space:nowrap;'+
+            '">'+
+                'Nombre'+
+            '</th>'+
+
+            '<th style="'+
+                'width:120px;'+
+                'text-align:right;'+
+                'padding:6px 10px;'+
+                'white-space:nowrap;'+
+            '">'+
+                'Tamaño'+
+            '</th>'+
+
+        '</tr>';
+
+    list.forEach(function(f,i){
+
+        html +=
+
+            '<tr '+
+                'onclick="FMSelect('+i+')" '+
+                'style="cursor:pointer;">'+
+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'border-bottom:1px solid #ddd;'+
+                    'white-space:nowrap;'+
+                '">'+
+                    f.name+
+                '</td>'+
+
+                '<td style="'+
+                    'padding:6px 10px;'+
+                    'text-align:right;'+
+                    'border-bottom:1px solid #ddd;'+
+                    'white-space:nowrap;'+
+                '">'+
+                    Math.round(f.size/1024)+
+                    ' KB'+
+                '</td>'+
+
+            '</tr>';
+
+    });
+
+    html +=
+
+        '</table>'+
+        '</div>';
+
+    dcDialog(
+
+        "Administrador de Recursos (" +
+        list.length +
+        ")",
+
+        html
+
+    );
+
+}
+
+function FMSelect(index){
+
+    const f = window.fmList[index];
+
+    let html;
+
+    if(f.mime.startsWith("image/")){
+
+        html =
+
+            '<img '+
+                'src="'+f.imageUrl+'" '+
+                'alt="'+f.name+'" '+
+                'title="'+f.name+'" '+
+                'style="'+
+                    'display:block;'+
+                    'margin:12px auto;'+
+                    'max-width:100%;'+
+                    'height:auto;'+
+                '">';
+
+    }
+    else{
+
+        let icon = "[FILE] ";
+
+        if(f.mime.startsWith("audio/"))
+
+            icon = "[AUDIO] ";
+
+        else if(f.mime.startsWith("video/"))
+
+            icon = "[VIDEO ] ";
+
+        else if(
+
+            f.mime.indexOf("pdf") >= 0 ||
+
+            f.mime.indexOf("document") >= 0 ||
+
+            f.mime.indexOf("sheet") >= 0 ||
+
+            f.mime.indexOf("presentation") >= 0 ||
+
+            f.mime.indexOf("text") >= 0
+
+        )
+
+            icon = "   [DOC] ";
+
+        html =
+
+            '<a '+
+                'href="'+f.url+'" '+
+                'target="_blank" '+
+                'title="'+f.name+'">'+
+                icon+' '+f.name+
+            '</a>';
+
+    }
+
+    dcCloseDialog();
+
+    setTimeout(function(){
+
+        helpFocus();
+      /*
+
+        helpRestoreSelection();
+
+        helpInsertHTML(html);
+
+      */
+      const editor = helpGetEditor();
+
+      editor.focus();
+
+      editor.innerHTML += html;
+
+    },0);
+}
+  
+</script>

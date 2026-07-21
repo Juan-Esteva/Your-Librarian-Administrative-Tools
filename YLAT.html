@@ -506,12 +506,19 @@ Your Librarian
         <img src="">
 
     </div>
-      
+    
     <?!= include('RTE'); ?>
     <?!= include('TableEditor'); ?>
+    
+    <?!= include('HelpEditorData'); ?>
+    <?!= include('HelpEditorCore'); ?>
+    <?!= include('HelpEditorInit'); ?>
+    <?!= include('HelpEditorResources'); ?>
     <?!= include('HelpEditor'); ?>
+    
     <?!= include("HelpPermissions"); ?>
     <?!= include('NewsEditor'); ?>
+      
     
 </div>
 
@@ -780,7 +787,6 @@ function showHome(){
 initInterface();
 
 showHome();
-
 
   
 </script>

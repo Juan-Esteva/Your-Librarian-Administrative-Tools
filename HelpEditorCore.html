@@ -1,0 +1,296 @@
+<script>
+  
+const helpEditor = {
+    editor : null,
+    savedRange : null
+};
+
+function helpSetEditor(id){
+
+    helpEditor.editor = document.getElementById(id);
+
+    return helpEditor.editor;
+
+}
+
+function helpGetEditor(){
+
+    return helpEditor.editor;
+
+}
+
+function helpFocus(){
+
+    if(helpEditor.editor)
+
+        helpEditor.editor.focus();
+
+}
+
+function helpSaveSelection(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount)
+        return false;
+
+    helpEditor.savedRange =
+
+        sel.getRangeAt(0).cloneRange();
+
+    return true;
+
+}
+
+function helpRestoreSelection(){
+
+    if(!helpEditor.savedRange)
+        return false;
+
+    const sel = window.getSelection();
+
+    sel.removeAllRanges();
+
+    sel.addRange(
+
+        helpEditor.savedRange
+
+    );
+
+    return true;
+
+}
+
+function helpExec(cmd,value=null){
+
+    helpFocus();
+
+    if(helpEditor.savedRange){
+
+        const sel = window.getSelection();
+
+        sel.removeAllRanges();
+
+        sel.addRange(helpEditor.savedRange);
+
+    }
+
+    document.execCommand(
+
+        cmd,
+
+        false,
+
+        value
+
+    );
+
+    helpSaveSelection();
+
+    helpFocus();
+
+}
+
+function helpInsertHTML(html){
+
+    helpRestoreSelection();
+
+    document.execCommand(
+
+        "insertHTML",
+
+        false,
+
+        html
+
+    );
+
+    helpSaveSelection();
+
+    helpFocus();
+
+    return true;
+
+}
+
+/*            Funciones de Formato              */
+
+function helpBold(){
+
+    helpExec("bold");
+
+}
+
+function helpItalic(){
+
+    helpExec("italic");
+
+}
+
+function helpUnderline(){
+
+    helpExec("underline");
+
+}
+
+function helpH1(){
+
+    helpExec(
+
+        "formatBlock",
+
+        "H1"
+
+    );
+
+}
+
+function helpH2(){
+
+    helpExec(
+
+        "formatBlock",
+
+        "H2"
+
+    );
+
+}
+function helpBulletList(){
+
+    helpExec(
+
+        "insertUnorderedList"
+
+    );
+
+}
+
+function helpNumberList(){
+
+    helpExec(
+
+        "insertOrderedList"
+
+    );
+
+}
+
+function helpAlignLeft(){
+
+    helpExec("justifyLeft");
+
+}
+
+function helpAlignCenter(){
+
+    helpExec("justifyCenter");
+
+}
+
+function helpAlignRight(){
+
+    helpExec("justifyRight");
+
+}
+
+function helpJustify(){
+
+    helpExec("justifyFull");
+
+}
+function helpRemoveFormat(){
+
+    helpExec(
+
+        "removeFormat"
+
+    );
+
+}
+
+function helpInsertParagraph(){
+
+    helpExec(
+
+        "insertParagraph"
+
+    );
+
+}
+async function helpInsertLink(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount){
+
+        dcAlert(
+            "Seleccione primero el texto que desea convertir en enlace."
+        );
+
+        return;
+
+    }
+
+    helpSaveSelection();
+
+    const text = sel.toString().trim();
+
+    if(text===""){
+
+        dcAlert(
+            "Seleccione primero el texto que desea convertir en enlace."
+        );
+
+        return;
+
+    }
+
+    const url = await dcPrompt(
+
+        "Dirección del enlace:",
+
+        "https://"
+
+    );
+
+    if(!url)
+        return;
+
+    helpInsertHTML(
+
+        '<a href="' +
+
+        url +
+
+        '" target="_blank">' +
+
+        text +
+
+        '</a>'
+
+    );
+
+}
+
+function helpInsertCode(){
+
+    const sel = window.getSelection();
+
+    if(!sel.rangeCount)
+        return;
+
+    const text = sel.toString();
+
+    helpInsertHTML(
+
+        "<pre><code>" +
+
+        text +
+
+        "</code></pre>"
+
+    );
+
+}
+</script>
