@@ -14,7 +14,7 @@
 • YLAT.html → interfaz principal.
 
 
-Ultimo guardado : 202607131950
+Ultimo guardado : 202607201852
 
 
 */
@@ -86,9 +86,42 @@ function LoadConfig(){
 
 function GetConfig(key){
 
-    LoadConfig();
+    const rows = LoadTable("config");
+    const headers = rows[0];
+    const idxKey   = headers.indexOf("key");
+    const idxValue = headers.indexOf("value");
+    const idxType  = headers.indexOf("type");
 
-    return CONFIG[key];
+    key = String(key || "").trim();
+
+    for(let i=1;i<rows.length;i++){
+
+        if(String(rows[i][idxKey]).trim() !== key)
+            continue;
+
+        let value = rows[i][idxValue];
+
+        switch(String(rows[i][idxType]).toUpperCase()){
+
+            case "BOOLEAN":
+
+                value = IsTrue(value);
+
+                break;
+
+            case "INTEGER":
+
+                value = Number(value);
+
+                break;
+
+        }
+
+        return value;
+
+    }
+
+    return null;
 
 }
 

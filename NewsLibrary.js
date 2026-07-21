@@ -167,66 +167,16 @@ function YLSaveNews(news){
 
 }
 
-/*   Eliminar   */
+function YLDeleteNews(){
 
-function deleteNews(){
+    const file = YLResolveNewsFile();
 
-    dcConfirm(
+    if(file){
 
-        "¿Eliminar la gacetilla activa?",
+        file.setTrashed(true);
 
-        function(){
+    }
 
-            google.script.run
-
-                .withSuccessHandler(function(){
-
-                    document.getElementById("newsTitle").value = "";
-
-                    document.getElementById("newsDaily").checked = true;
-
-                    document.getElementById("newsWeekly").checked = false;
-
-                    document.getElementById("newsMonthly").checked = false;
-
-                    document.getElementById("newsCatalog").checked = false;
-
-                    document.getElementById("newsPreserve").checked = true;
-
-                    document.getElementById("newsDocument").innerHTML = "";
-
-                    document.getElementById("newsTitle").focus();
-
-                    dcAlert(
-
-                        "La gacetilla fue eliminada.",
-
-                        "EDN"
-
-                    );
-
-                })
-
-                .withFailureHandler(function(err){
-
-                    dcAlert(
-
-                        err.message,
-
-                        "EDN"
-
-                    );
-
-                })
-
-                .YLDeleteNews();
-
-        },
-
-        "EDN"
-
-    );
+    return true;
 
 }
-
-

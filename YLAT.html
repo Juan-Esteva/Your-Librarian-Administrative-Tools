@@ -523,6 +523,8 @@ Listo
 
 </div>
 
+
+<?!= include('dcCore'); ?>
 <?!= include('dcLibrary'); ?>
 
 <script>
@@ -579,7 +581,7 @@ const modules = {
 
         show : function(){
 
-            document.getElementById("helpContainer").style.display = "block";
+    document.getElementById("helpContainer").style.display = "block";
 
         }
 
@@ -595,7 +597,7 @@ const modules = {
 
         show : function(){
 
-            document.getElementById("newsContainer").style.display = "block";
+            document.getElementById("newsContainer").style.display = "flex";
 
         }
 
@@ -735,6 +737,22 @@ function showHelpEditor(){
 
 }
 
+function trace(module,functionName,message){
+
+    google.script.run
+        .withFailureHandler(function(err){
+
+            alert(err.message);
+
+        })
+        .YLTrace(
+            module,
+            functionName,
+            message
+        );
+
+}
+
 /*   Pantalla inicial   */
 
 function showHome(){
@@ -762,6 +780,8 @@ function showHome(){
 initInterface();
 
 showHome();
+
+
   
 </script>
 

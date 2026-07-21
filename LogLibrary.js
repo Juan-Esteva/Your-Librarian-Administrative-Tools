@@ -1,9 +1,9 @@
-/*==============================================================================
+/*
     LogLibrary.gs
 
-    ----------------------------------------------------------------------------
+  
     YLAT - Sistema de Registro de Eventos
-    ----------------------------------------------------------------------------
+    
 
     Objetivo
     --------
@@ -18,11 +18,11 @@
 
        para mantener compatibilidad con el ecosistema VY² y con YL.
 
-    2. El archivo se almacena en la carpeta indicada por:
+    2. El archivo de registro se identifica mediante:
 
-            logFolderId
+        eventLogId
 
-       definida en config.csv.
+   definido en config.csv.
 
     3. Cada línea comienza con la firma:
 
@@ -46,18 +46,18 @@
     5. El logger nunca debe generar excepciones.
        Ante cualquier error interno simplemente abandona el registro.
 
-==============================================================================*/
+*/
 
 const LOG_SYSTEM = "YLAT";
 const LOG_FILE   = "events.log";
 
 
-/*------------------------------------------------------------------------------
+/*
     YLLog()
 
     Registra un evento en events.log.
 
-------------------------------------------------------------------------------*/
+*/
 
 function YLLog(
     level,
@@ -69,35 +69,12 @@ function YLLog(
 
     try{
 
-        const folderId = GetConfig("logFolderId");
-
-        if(!folderId)
+        const fileId = GetConfig("eventLogId");
+      
+        if(!fileId)
             return;
 
-        const folder = DriveApp.getFolderById(folderId);
-
-        let file = null;
-
-        const files = folder.getFilesByName(LOG_FILE);
-
-        if(files.hasNext()){
-
-            file = files.next();
-
-        }
-        else{
-
-            file = folder.createFile(
-
-                LOG_FILE,
-
-                "",
-
-                MimeType.PLAIN_TEXT
-
-            );
-
-        }
+        const file = DriveApp.getFileById(fileId);
 
         const timeStamp = Utilities.formatDate(
 
@@ -119,16 +96,10 @@ function YLLog(
             functionName     + " | " +
             message          + "\n";
 
-        //
-        // TODO
-        //
-        // Sustituir esta implementación por el mecanismo definitivo
-        // de escritura de events.log.
-        //
-        // No utilizar Logger.log().
-        //
-
-        const oldContent = file.getBlob().getDataAsString("UTF-8");
+        const oldContent =
+    file
+        .getBlob()
+        .getDataAsString("UTF-8");
 
         file.setContent(
 
@@ -138,19 +109,31 @@ function YLLog(
 
         );
 
+      // file.setContent("PRUEBA");
+
+// throw new Error("setContent OK");
+      
+
     }
     catch(e){
 
+      const fileId = GetConfig("eventLogId");
+
+      throw new Error(e.message);
+
+        //
         // El logger nunca debe interrumpir la ejecución.
+        //
 
     }
 
 }
 
+/*
 
-/*------------------------------------------------------------------------------
     Funciones auxiliares
-------------------------------------------------------------------------------*/
+    
+*/
 
 function YLInfo(
     user,
@@ -201,6 +184,50 @@ function YLError(
         module,
         functionName,
         message
+    );
+
+}
+
+/*
+    
+YLTrace()
+
+Punto de entrada para trazas provenientes del cliente.
+
+*/
+
+function YLTrace(
+    module,
+    functionName,
+    message
+){
+
+    if(!IsTrue(GetConfig("debugMode")))
+      return;
+
+    let user = "";
+
+    try{
+
+        user = Session.getActiveUser().getEmail();
+
+    }
+    catch(e){
+
+        user = "";
+
+    }
+
+    YLInfo(
+
+        user,
+
+        module,
+
+        functionName,
+
+        message
+
     );
 
 }

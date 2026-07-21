@@ -56,3 +56,9 @@ function TestConfig(){
         });
 
 }
+
+function JustAnotherTest(){
+  Logger.log(GetConfig("debugMode"));
+  Logger.log(typeof GetConfig("debugMode"));
+
+}

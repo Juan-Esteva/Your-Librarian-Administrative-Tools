@@ -1,12 +1,39 @@
 <!-- Ultimo guardado : 202607141021 -->
+
+<style>
+
+@keyframes blinkLoading{
+
+    0%   { opacity:1; }
+
+    50%  { opacity:.25; }
+
+    100% { opacity:1; }
+
+}
+
+.loadingBlink{
+
+    animation: blinkLoading .9s infinite;
+
+}
+
+</style>
+
 <div
     id="newsContainer"
     style="
-        display:none;
-        height:100%;
-        background:#ffffff;
-        box-sizing:border-box;
-        padding:10px;
+          display:none;
+          position:relative;
+          height:100%;
+          width:100%;
+          overflow:hidden;
+
+          background:#ffffff;
+          box-sizing:border-box;
+          padding:10px;
+
+          flex-direction:column;
     ">
 
     <div id="newsHeader">
@@ -101,24 +128,93 @@
     <div id="newsToolbar"></div>
 
     <div
-        id="newsDocument"
-        contenteditable="true"
+    id="newsDocument"
+    contenteditable="true"
+    style="
+        flex:1;
+
+        overflow:auto;
+
+        border:1px solid #b8b8b8;
+
+        border-radius:6px;
+
+        padding:12px;
+
+        background:#ffffff;
+
+        margin-top:8px;
+
+        margin-bottom:10px;
+
+        box-sizing:border-box;
+
+        min-height:0;
+    ">
+    </div>
+
+  <div
+    id="newsImageSizer"
+    style="
+        display:none;
+        margin-top:8px;
+        padding:8px;
+        background:#eef7fc;
+        border:1px solid #b8dceb;
+        border-radius:6px;
+        text-align:center;
+    ">
+
+    <div
         style="
-            height:calc(100% - 145px);
-            overflow:auto;
-            border:1px solid #b8b8b8;
-            border-radius:6px;
-            padding:12px;
-            background:#ffffff;
-            margin-top:8px;
-            margin-bottom:10px;
-            box-sizing:border-box;
+            font-weight:bold;
+            margin-bottom:6px;
         ">
+
+        Tamaño de la imagen
+
     </div>
 
     <div
-        id="newsFooter"
-        style="margin-top:10px;">
+        style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:10px;
+        ">
+
+        <input
+            id="newsImageSlider"
+            type="range"
+            min="10"
+            max="100"
+            value="100"
+            oninput="newsUpdateImageSize()"
+            style="width:50%;">
+
+        <span
+            id="newsImageValue"
+            style="
+                width:50px;
+                text-align:left;
+                font-weight:bold;
+            ">
+
+            100%
+
+        </span>
+
+    </div>
+
+  </div>
+
+
+    <div
+    id="newsFooter"
+    style="
+        margin-top:auto;
+        padding-top:8px;
+    ">
 
         <button onclick="saveNews()">
 
@@ -137,6 +233,8 @@
 </div>
 
 <script>
+
+  let newsCurrentImage = null;
 
 function initNewsEditor(){
 
@@ -160,45 +258,88 @@ function initNewsEditor(){
 
     htmlSetEditor("newsDocument");
 
-toolbar.innerHTML =
+    toolbar.innerHTML =
 
-    '<button onclick="htmlBold()"><b>B</b></button>' +
+    '<style>'+
 
-    '<button onclick="htmlItalic()"><i>I</i></button>' +
+    '.newsTB{'+
+        'width:42px;'+
+        'height:38px;'+
+        'margin-right:4px;'+
+        'padding:0;'+
+        'vertical-align:middle;'+
+    '}'+
 
-    '<button onclick="htmlUnderline()"><u>U</u></button>' +
+    '.newsTBWide{'+
+        'width:70px;'+
+        'height:38px;'+
+        'margin-right:4px;'+
+        'padding:0;'+
+        'vertical-align:middle;'+
+    '}'+
 
-    '<button onclick="htmlH1()">H1</button>' +
+    '.newsTBExtra{'+
+        'width:100px;'+
+        'height:38px;'+
+        'padding:0;'+
+        'vertical-align:middle;'+
+    '}'+
 
-    '<button onclick="htmlH2()">H2</button>' +
+    '.newsTBSeparator{'+
+        'display:inline-block;'+
+        'width:1px;'+
+        'height:24px;'+
+        'margin:0 10px;'+
+        'background:#bdbdbd;'+
+        'vertical-align:middle;'+
+    '}'+
 
-    '<button onclick="htmlBulletList()">•</button>' +
+    '</style>' +
 
-    '<button onclick="htmlNumberList()">1.</button>' +
+    '<button class="newsTB" onclick="htmlBold()"><b>B</b></button>' +
 
-    '<button onclick="htmlAlignLeft()">'+
-    '<svg width="16" height="16" viewBox="0 0 16 16">'+
-    '<path d="M2 3H12M2 6H9M2 9H13M2 12H10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
-    '</svg></button>' +
+    '<button class="newsTB" onclick="htmlItalic()"><i>I</i></button>' +
 
-    '<button onclick="htmlAlignCenter()">'+
-    '<svg width="16" height="16" viewBox="0 0 16 16">'+
-    '<path d="M4 3H12M3 6H13M4 9H12M3 12H13" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
-    '</svg></button>' +
+    '<button class="newsTB" onclick="htmlUnderline()"><u>U</u></button>' +
 
-    '<button onclick="htmlAlignRight()">'+
-    '<svg width="16" height="16" viewBox="0 0 16 16">'+
-    '<path d="M4 3H14M7 6H14M3 9H14M6 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
-    '</svg></button>' +
+    '<button class="newsTB" onclick="htmlH1()">H1</button>' +
 
-    '<button onclick="htmlJustify()">'+
-    '<svg width="16" height="16" viewBox="0 0 16 16">'+
-    '<path d="M2 3H14M2 6H14M2 9H14M2 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
-    '</svg></button>' +
+    '<button class="newsTB" onclick="htmlH2()">H2</button>' +
 
-    '<button onclick="htmlInsertLink()">Link</button>' +
+    '<button class="newsTB" onclick="htmlBulletList()">•</button>' +
 
-    '<button onclick="newsInsertResource()">Recursos</button>';
+    '<button class="newsTB" onclick="htmlNumberList()">1.</button>' +
+
+    '<button class="newsTB" onclick="htmlAlignLeft()">'+
+        '<svg width="16" height="16" viewBox="0 0 16 16">'+
+            '<path d="M2 3H12M2 6H9M2 9H13M2 12H10" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+        '</svg>'+
+    '</button>' +
+
+    '<button class="newsTB" onclick="htmlAlignCenter()">'+
+        '<svg width="16" height="16" viewBox="0 0 16 16">'+
+            '<path d="M4 3H12M3 6H13M4 9H12M3 12H13" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+        '</svg>'+
+    '</button>' +
+
+    '<button class="newsTB" onclick="htmlAlignRight()">'+
+        '<svg width="16" height="16" viewBox="0 0 16 16">'+
+            '<path d="M4 3H14M7 6H14M3 9H14M6 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+        '</svg>'+
+    '</button>' +
+
+    '<button class="newsTB" onclick="htmlJustify()">'+
+        '<svg width="16" height="16" viewBox="0 0 16 16">'+
+            '<path d="M2 3H14M2 6H14M2 9H14M2 12H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>'+
+        '</svg>'+
+    '</button>' +
+
+    '<span class="newsTBSeparator"></span>' +
+
+    '<button class="newsTBWide" onclick="htmlInsertLink()">Link</button>' +
+
+    '<button class="newsTBExtra" onclick="newsInsertResource()">Recursos</button>';
+  
 
     if(!editor.dataset.initialized){
 
@@ -215,6 +356,13 @@ toolbar.innerHTML =
         editor.addEventListener(
             "mouseleave",
             htmlSaveSelection
+        );
+        editor.addEventListener(
+
+            "click",
+
+        newsEditorClick
+
         );
 
         editor.dataset.initialized = "1";
@@ -356,31 +504,32 @@ function deleteNews(){
 
                 .withSuccessHandler(function(){
 
-                    document.getElementById("newsTitle").value = "";
+    document.getElementById("newsTitle").value = "";
 
-                    document.getElementById("newsDaily").checked = true;
+    document.getElementById("newsDaily").checked = true;
 
-                    document.getElementById("newsWeekly").checked = false;
+    document.getElementById("newsWeekly").checked = false;
 
-                    document.getElementById("newsMonthly").checked = false;
+    document.getElementById("newsMonthly").checked = false;
 
-                    document.getElementById("newsCatalog").checked = false;
+    document.getElementById("newsCatalog").checked = false;
 
-                    document.getElementById("newsPreserve").checked = true;
+    document.getElementById("newsPreserve").checked = true;
 
-                    document.getElementById("newsDocument").innerHTML = "";
+    document.getElementById("newsDocument").innerHTML = "";
 
-                    document.getElementById("newsTitle").focus();
+    newsCurrentImage = null;
 
-                    dcAlert(
+    newsHideImageSizer();
 
-                        "La gacetilla fue eliminada.",
+    document.getElementById("newsTitle").focus();
 
-                        "EDN"
+    dcAlert(
+        "La gacetilla fue eliminada.",
+        "EDN"
+    );
 
-                    );
-
-                })
+})
 
                 .withFailureHandler(function(err){
 
@@ -472,9 +621,13 @@ function deleteNews(){
 
     panel.innerHTML =
 
-        '<div style="padding:20px;text-align:center;color:#666;">'+
+    '<div '+
+        'class="loadingBlink" '+
+        'style="padding:20px;text-align:center;color:#666;font-weight:bold;">'+
+
         'Cargando recursos...'+
-        '</div>';
+
+    '</div>';
 
     google.script.run
 
@@ -617,7 +770,7 @@ function deleteNews(){
                         'margin:12px auto;'+
                         'max-width:100%;'+
                         'height:auto;'+
-                    '">';
+                    '"><br><br>';
     }
 
     let icon="[FILE] ";
@@ -645,8 +798,151 @@ function deleteNews(){
 
   }
 
-  
-  
-  
+function newsEditorClick(ev){
+
+  trace(
+
+    "EDN",
+
+    "newsEditorClick",
+
+    "target=" + ev.target.tagName
+
+);
+
+    if(ev.target.tagName==="IMG"){
+
+        if(newsCurrentImage)
+
+            newsCurrentImage.style.outline = "none";
+
+        newsCurrentImage = ev.target;
+
+        newsCurrentImage.style.outline =
+            "2px solid #3b82f6";
+
+        newsShowImageSizer(newsCurrentImage);
+
+    }
+    else{
+
+        if(newsCurrentImage){
+
+            newsCurrentImage.style.outline = "none";
+
+            newsCurrentImage = null;
+
+        }
+
+        newsHideImageSizer();
+
+    }
+
+}
+
+function newsShowImageSizer(img){
+
+    const sizer =
+        document.getElementById("newsImageSizer");
+
+    const slider =
+        document.getElementById("newsImageSlider");
+
+    const value =
+        document.getElementById("newsImageValue");
+
+    let percent = 100;
+
+    if(img.style.width &&
+       img.style.width.endsWith("%")){
+
+        percent =
+            parseInt(img.style.width,10);
+
+    }
+
+    slider.value = percent;
+
+    value.textContent =
+        percent + "%";
+
+    sizer.style.display =
+        "block";
+
+    document.addEventListener(
+    "keydown",
+    newsImageSizerKeyDown
+);
+
+}
+
+function newsHideImageSizer(){
+
+    document
+        .getElementById("newsImageSizer")
+        .style.display = "none";
+
+    document.removeEventListener(
+        "keydown",
+        newsImageSizerKeyDown
+    );
+
+}
+
+function newsUpdateImageSize(){
+
+    if(!newsCurrentImage)
+        return;
+
+    const slider =
+        document.getElementById("newsImageSlider");
+
+    const value =
+        document.getElementById("newsImageValue");
+
+    const percent =
+        parseInt(slider.value,10);
+
+    value.textContent =
+        percent + "%";
+
+    newsCurrentImage.style.width =
+        percent + "%";
+
+    newsCurrentImage.style.height =
+        "auto";
+
+}
+
+  function newsImageSizerKeyDown(ev){
+
+    if(ev.key !== "Delete")
+        return;
+
+    if(!newsCurrentImage)
+        return;
+
+    ev.preventDefault();
+
+    dcConfirm(
+
+        "¿Eliminar la imagen seleccionada?",
+
+        function(){
+
+            newsCurrentImage.remove();
+
+            newsCurrentImage = null;
+
+            newsHideImageSizer();
+
+        },
+
+        "Editor de Novedades"
+
+    );
+
+  }
+
 </script>
 
