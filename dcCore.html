@@ -89,4 +89,95 @@ versiones del ecosistema VY².
 
 */
 
+/*
+
+Funciones auxiliares para mantener compatibilidad entre
+versiones del ecosistema VY².
+
+*/
+
+/*      dcWorkspace      */
+
+/*
+
+    Objetivo
+    --------
+
+    Representar el contexto de trabajo del usuario.
+
+    Un Workspace permite ejecutar operaciones complejas
+    (diálogos, exploración de recursos, asistentes,
+    llamadas asíncronas, etc.) preservando el contexto
+    original del usuario.
+
+    Este objeto nace para resolver la inserción de recursos
+    en el Editor de Ayuda (EDA), pero forma parte del núcleo
+    del ecosistema VY² y está diseñado para evolucionar como
+    administrador general del Workspace del usuario.
+
+*/
+
+class dcWorkspace{
+
+    constructor(){
+
+        this.range = null;
+        this.activeElement = null;
+
+    }
+
+    SaveContext(){
+
+        this.activeElement = document.activeElement;
+
+        const sel = window.getSelection();
+
+        if(sel && sel.rangeCount){
+
+            this.range =
+                sel.getRangeAt(0).cloneRange();
+
+        }
+
+    }
+
+    RestoreContext(){
+
+        if(this.activeElement){
+
+            this.activeElement.focus();
+
+        }
+
+        if(this.range){
+
+            const sel = window.getSelection();
+
+            sel.removeAllRanges();
+
+            sel.addRange(this.range);
+
+        }
+
+    }
+
+}
+
+/*
+    Próximas responsabilidades previstas
+
+    SetInsertionPoint()
+    ClearInsertionPoint()
+
+    InsertHTML()
+    InsertImage()
+    InsertLink()
+    InsertTable()
+
+    BeginTransaction()
+    Commit()
+    Rollback()
+    
+*/
+
 </script>

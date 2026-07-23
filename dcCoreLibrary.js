@@ -106,10 +106,3 @@ function IsFalse(value){
 
 /*    COMPATIBILIDAD     */
 
-
-/*
-
-Funciones auxiliares para mantener compatibilidad entre
-versiones del ecosistema VY².
-
-*/

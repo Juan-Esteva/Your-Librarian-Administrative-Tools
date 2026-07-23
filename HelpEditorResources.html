@@ -2,7 +2,10 @@
 
 async function helpInsertResource(){
 
-    helpSaveSelection();
+    window.helpWorkspace =
+    new dcWorkspace();
+
+    window.helpWorkspace.SaveContext();
 
     const type = await dcList(
 
@@ -200,24 +203,19 @@ function FMSelect(index){
             '</a>';
 
     }
-
+  
     dcCloseDialog();
 
     setTimeout(function(){
 
         helpFocus();
-      /*
 
-        helpRestoreSelection();
+        helpFocus();
+
+        window.helpWorkspace.RestoreContext();
 
         helpInsertHTML(html);
-
-      */
-      const editor = helpGetEditor();
-
-      editor.focus();
-
-      editor.innerHTML += html;
+            
 
     },0);
 }
