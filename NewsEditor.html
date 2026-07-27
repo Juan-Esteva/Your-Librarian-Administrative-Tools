@@ -1,4 +1,4 @@
-<!-- Ultimo guardado : 202607141021 -->
+<!-- Ultimo guardado : 202607253109 -->
 
 <style>
 
@@ -555,6 +555,10 @@ function deleteNews(){
 
   function newsInsertResource(){
 
+    window.newsWorkspace = new dcWorkspace();
+
+    window.newsWorkspace.Begin();
+
     newsShowResourceBrowser();
 
   }
@@ -735,68 +739,27 @@ function deleteNews(){
 
     const f = window.newsResourceList[index];
 
-    const html = newsBuildResourceHTML(f);
-
     dcCloseDialog();
 
     setTimeout(function(){
 
+        const ws = window.newsWorkspace;
+
+        if(!ws)
+            return;
+
         htmlFocus();
 
-        if(!htmlInsertHTML(html)){
+        ws.Restore();
 
-            const editor = htmlGetEditor();
+        ws.InsertFile(f);
 
-            editor.focus();
-
-            editor.innerHTML += html;
-
-        }
+        window.newsWorkspace = null;
 
     },0);
 
   }
 
-  function newsBuildResourceHTML(f){
-
-    if(f.mime.startsWith("image/")){
-
-        return  '<img '+
-                    'src="'+f.imageUrl+'" '+
-                    'alt="'+f.name+'" '+
-                    'title="'+f.name+'" '+
-                    'style="'+
-                        'display:block;'+
-                        'margin:12px auto;'+
-                        'max-width:100%;'+
-                        'height:auto;'+
-                    '"><br><br>';
-    }
-
-    let icon="[FILE] ";
-
-    if(f.mime.startsWith("audio/"))
-
-        icon="[AUDIO] ";
-
-    else if(f.mime.startsWith("video/"))
-
-        icon="[VIDEO] ";
-
-    else
-
-        icon="[DOC] ";
-
-    return  '<a '+
-                'href="'+f.url+'" '+
-                'target="_blank" '+
-                'title="'+f.name+'">'+
-
-                icon+" "+f.name+
-
-            '</a>';
-
-  }
 
 function newsEditorClick(ev){
 
@@ -916,7 +879,13 @@ function newsUpdateImageSize(){
 
   function newsImageSizerKeyDown(ev){
 
-    if(ev.key !== "Delete")
+    console.log(
+        "newsImageSizerKeyDown:",
+        ev.key
+    );
+
+    if(ev.key !== "Delete" &&
+       ev.key !== "Backspace")
         return;
 
     if(!newsCurrentImage)
@@ -928,7 +897,9 @@ function newsUpdateImageSize(){
 
         "¿Eliminar la imagen seleccionada?",
 
-        function(){
+        function(ok){
+
+            if(!ok) return;
 
             newsCurrentImage.remove();
 

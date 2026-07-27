@@ -62,3 +62,21 @@ function JustAnotherTest(){
   Logger.log(typeof GetConfig("debugMode"));
 
 }
+
+async function TestDCFM(){
+
+    const fm = new dcFileManager();
+
+    const result = await fm.Open({
+
+        brand:{
+            title:"ylat"
+        },
+
+        caption:"Seleccionar recurso"
+
+    });
+
+    console.log("Resultado:", result);
+
+}

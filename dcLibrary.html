@@ -1,162 +1,306 @@
-<!-- Ultimo guardado : 202607131950 -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>dcLibrary 2.0 Template</title>
 <style>
-
 #dcDialogOverlay{
-
     position:fixed;
     inset:0;
-
-    background:rgba(0,0,0,.30);
-
     display:none;
-
     justify-content:center;
     align-items:center;
-
+    background:rgba(0,0,0,.30);
     z-index:99999;
+}
+#dcDialog{width:420px;overflow:hidden;}
+#dcDialog.dcClassic{background:#fff;border:1px solid #999;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.25);}
+
+/*         THEME MODERN         */
+
+#dcDialog.dcModern{
+
+    background:rgba(70,185,220,.58);
+    color:#F8FBFD;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:22px;
+    box-shadow:
+        0 18px 45px rgba(0,0,0,.28);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
 
 }
 
-#dcDialog{
+#dcDialog.dcModern #dcDialogHeader{
 
-    width:420px;
+    padding:24px 28px 8px 28px;
 
-    background:white;
+    background:transparent;
 
-    border-radius:10px;
-
-    border:1px solid #999;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.25);
-
-    overflow:hidden;
+    border:none;
 
 }
 
-#dcDialogHeader{
+#dcDialog.dcModern #dcDialogBody{
 
-    background:rgb(140,230,255);
+    padding:28px;
 
-    padding:10px;
+    color:rgba(255,255,255,.96);
 
-    font-weight:bold;
+    font-size:17px;
 
-}
-
-#dcDialogBody{
-
-    padding:18px;
-
-    line-height:1.5;
+    line-height:1.6;
 
 }
 
-#dcDialogButtons{
+#dcDialog.dcModern #dcDialogButtons{
 
-    padding:10px;
+    padding:8px 26px 24px;
+
+    background:transparent;
+
+    border:none;
 
     text-align:right;
 
-    border-top:1px solid #ddd;
+}
+
+#dcDialog.dcModern button{
+
+    min-width:120px;
+
+    height:42px;
+
+    margin-left:12px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:rgba(255,255,255,.92);
+
+    color:#5D6F79;
+
+    font-size:15px;
+
+    font-weight:500;
+
+    transition:.20s;
 
 }
 
-#dcDialogButtons button{
+#dcDialog.dcModern button:hover{
 
-    min-width:80px;
+    background:white;
 
 }
 
-#dcPromptInput{
+#dcDialog.dcModern input{
 
     width:100%;
 
-    margin-top:10px;
-
-    padding:6px;
-
     box-sizing:border-box;
+
+    margin-top:16px;
+
+    padding:12px 14px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:rgba(255,255,255,.96);
+
+    color:#555;
+
+    font-size:15px;
 
 }
 
+
+
+#dcDialogHeader{padding:12px;font-weight:bold;}
+#dcDialogBody{padding:18px;line-height:1.5;}
+#dcDialogButtons{padding:10px;text-align:right;}
 </style>
-
+</head>
+<body>
 <div id="dcDialogOverlay">
-
-    <div id="dcDialog">
-
-        <div id="dcDialogHeader"></div>
-
-        <div id="dcDialogBody"></div>
-
-        <div id="dcDialogButtons"></div>
-
-    </div>
-
+<div id="dcDialog" class="dcClassic">
+<div id="dcDialogHeader"></div>
+<div id="dcDialogBody"></div>
+<div id="dcDialogButtons"></div>
 </div>
-
-
+</div>
 <script>
 
-/******************************************************************************
- * dcLibrary
- ******************************************************************************/
+const DC_THEME_CLASSIC=0;
+const DC_THEME_MODERN=1;
+let dcTheme=DC_THEME_MODERN;
+
+const DC_VERSION = "2.0";
+
+/* Variables privadas */
+
+let dcOverlay;
+let dcDialogBox;
+let dcHeader;
+let dcBody;
+let dcButtons;
+
+function dcInit(){
+
+    dcOverlay   = document.getElementById("dcDialogOverlay");
+    dcDialogBox = document.getElementById("dcDialog");
+    dcHeader    = document.getElementById("dcDialogHeader");
+    dcBody      = document.getElementById("dcDialogBody");
+    dcButtons   = document.getElementById("dcDialogButtons");
+
+}
+
+function dcSetTheme(theme){
+  dcTheme=theme;
+  const d=document.getElementById("dcDialog");
+  d.classList.remove("dcClassic","dcModern");
+  d.classList.add(theme===DC_THEME_MODERN?"dcModern":"dcClassic");
+}
+dcSetTheme(dcTheme);
+
+function dcSetTitle(title){
+
+    dcHeader.innerHTML =
+
+        '<div style="position:relative;">'+
+
+            '<div style="'+
+                'font-size:80px;'+
+                'font-weight:900;'+
+                'line-height:.85;'+
+                'letter-spacing:-2px;'+
+                'color:#ffffff;'+
+            '">'+
+                'ylat'+
+            '</div>'+
+
+            '<div style="'+
+                'margin-top:18px;'+
+                'font-size:12px;'+
+                'font-weight:600;'+
+                'color:#F4FBFD;'+
+            '">'+
+                title+
+            '</div>'+
+
+            '<div style="'+
+                'position:absolute;'+
+                'right:0;'+
+                'top:8px;'+
+                'font-size:11px;'+
+                'color:#E8F4F8;'+
+            '">'+
+                'v'+DC_VERSION+
+            '</div>'+
+
+        '</div>';
+
+}
+
+function dcSetBody(html){
+
+    dcBody.innerHTML = html;
+
+}
+
+function dcSetButtons(html){
+
+    dcButtons.innerHTML = html;
+
+}
+
+function dcBindButton(id,handler){
+
+    document.getElementById(id).onclick = handler;
+
+}
+
+function dcPrepareDialog(title,body){
+
+    dcSetTitle(title);
+
+    dcSetBody(body);
+
+}
+
+function dcShow(){
+
+    dcOverlay.style.display = "flex";
+
+}
+
+function dcHide(){
+
+    dcOverlay.style.display = "none";
+
+}
 
 function dcCloseDialog(){
 
-    document.getElementById("dcDialogOverlay").style.display="none";
+    dcHide();
 
 }
 
 function dcAlert(message,title="Información"){
 
-    document.getElementById("dcDialogHeader").textContent = title;
+    dcPrepareDialog(title,message);
 
-    document.getElementById("dcDialogBody").innerHTML =
-        message;
+    dcSetButtons(
+    '<button id="dcAccept">Aceptar</button>'
+);
 
-    document.getElementById("dcDialogButtons").innerHTML =
+    dcBindButton(
+    "dcAccept",
+    dcCloseDialog
+);
 
-        '<button onclick="dcCloseDialog()">Aceptar</button>';
-
-    document.getElementById("dcDialogOverlay").style.display =
-        "flex";
+    dcShow();
 
 }
 
 function dcConfirm(message,callback,title="Confirmar"){
 
-    document.getElementById("dcDialogHeader").textContent = title;
+    dcPrepareDialog(title,message);
 
-    document.getElementById("dcDialogBody").innerHTML =
-        message;
+    dcSetButtons(
 
-    document.getElementById("dcDialogButtons").innerHTML =
+    '<button id="dcCancel">Cancelar</button>' +
 
-        '<button id="dcCancel">Cancelar</button>'+
+    '<button id="dcAccept">Aceptar</button>'
 
-        '<button id="dcAccept">Aceptar</button>';
+);
 
-    document.getElementById("dcDialogOverlay").style.display =
-        "flex";
+    dcShow();
 
-    document.getElementById("dcCancel").onclick =
+    dcBindButton(
+    "dcCancel",
+    function(){
 
-        function(){
+        dcCloseDialog();
 
-            dcCloseDialog();
+        callback(false);
 
-        };
+    }
+);
 
-    document.getElementById("dcAccept").onclick =
+dcBindButton(
+    "dcAccept",
+    function(){
 
-        function(){
+        dcCloseDialog();
 
-            dcCloseDialog();
+        callback(true);
 
-            callback();
-
-        };
+    }
+);
 
 }
 
@@ -164,27 +308,29 @@ function dcPrompt(message,defaultValue="",title="Entrada"){
 
     return new Promise(function(resolve){
 
-        document.getElementById("dcDialogHeader").textContent =
-            title;
+        dcPrepareDialog(
 
-        document.getElementById("dcDialogBody").innerHTML =
+    title,
 
-            message +
+    message +
 
-            '<br><input id="dcPromptInput" value="' +
+    '<br><input id="dcPromptInput" value="' +
 
-            defaultValue +
+    defaultValue +
 
-            '">';
+    '>'
 
-        document.getElementById("dcDialogButtons").innerHTML =
+);
 
-            '<button id="dcCancel">Cancelar</button>'+
+        dcSetButtons(
 
-            '<button id="dcAccept">Aceptar</button>';
+    '<button id="dcCancel">Cancelar</button>' +
 
-        document.getElementById("dcDialogOverlay").style.display =
-            "flex";
+    '<button id="dcAccept">Aceptar</button>'
+
+);
+
+        dcShow();
 
         document.getElementById("dcPromptInput").focus();
 
@@ -220,17 +366,20 @@ function dcPrompt(message,defaultValue="",title="Entrada"){
 
 function dcDialog(title,html){
 
-    document.getElementById("dcDialogHeader").textContent = title;
+    dcPrepareDialog(title,html);
 
-    document.getElementById("dcDialogBody").innerHTML = html;
+    dcSetButtons(
 
-    document.getElementById("dcDialogButtons").innerHTML =
+    '<button id="dcClose">Cerrar</button>'
 
-        '<button onclick="dcCloseDialog()">Cerrar</button>';
+);
 
-    document.getElementById("dcDialogOverlay").style.display =
+    dcBindButton(
+    "dcClose",
+    dcCloseDialog
+);
 
-        "flex";
+    dcShow();
 
 }
 
@@ -280,6 +429,8 @@ function dcListSelect(index){
 
 }
 
-
-
+dcInit();
+dcSetTheme(dcTheme);
 </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!-- Ultimo guardado : 202607131950 -->
+
+<!---
+ 
+   dcLibrary
+   =========
+ 
+   Biblioteca estándar de cuadros de diálogo de YLAT.
+ 
+   FILOSOFÍA DE DISEÑO
+   -------------------
+ 
+   Toda la aplicación utiliza esta biblioteca para mostrar:
+ 
+       • Alertas
+       • Confirmaciones
+       • Entradas de datos
+       • Diálogos personalizados
+       • Listas de selección
+ 
+   A partir de la versión 2 la biblioteca incorpora el concepto de TEMAS VISUALES.
+ 
+
+   OBJETIVOS
+   ---------
+ 
+   1) Separar completamente la lógica de los diálogos de su apariencia.
+ 
+   2) Permitir la coexistencia de múltiples estilos visuales sin modificar
+      el código de las funciones dcAlert(), dcConfirm(), dcPrompt() y
+      dcDialog().
+ 
+   3) Centralizar toda la identidad visual de YLAT en un único archivo.
+ 
+   TEMAS
+   -----
+ 
+       CLASSIC
+           Apariencia tradicional.
+           Conserva compatibilidad con versiones anteriores.
+ 
+       MODERN
+           Estilo inspirado en interfaces Fluent / Glass.
+ 
+           Características:
+ 
+               - Fondo translúcido.
+               - Bordes redondeados.
+               - Colores institucionales de YLAT.
+               - Tipografía limpia.
+               - Botones suaves.
+               - Posibilidad de incorporar logotipo "ylat".
+ 
+   NOTA DE DISEÑO
+   --------------
+ 
+   Nunca modificar la lógica de los diálogos para implementar cambios estéticos.
+ 
+   Toda evolución visual debe implementarse exclusivamente mediante temas CSS.
+ 
+
+   ESTRUCTURA BASE
+
+   Estas reglas definen únicamente la estructura del diálogo:
+
+       - posiciones
+       - layout
+       - tamaños
+       - flex
+       - overflow
+
+   No deben contener colores, tipografías, sombras ni bordes específicos de un tema.
+
+   Toda la identidad visual pertenece a las clases dcClassic, dcModern o futuras variantes.
+
+
+   TEMA CLASSIC
+
+   Apariencia histórica de YLAT.
+
+   Objetivos:
+   - compatibilidad
+   - estabilidad
+   - referencia visual
+
+
+
+   TEMA MODERN
+
+   Nueva identidad gráfica de YLAT.
+
+   Características:
+
+   - fondo translúcido
+   - efecto glass
+   - esquinas redondeadas
+   - botones suaves
+   - tipografía limpia
+   - preparada para incorporar la marca "ylat"
+
+
+
+Regla de diseño:
+
+Antes de crear un nuevo cuadro de diálogo,
+evaluar primero si puede implementarse reutilizando dcLibrary.
+
+El objetivo es que TODAS las ventanas del sistema
+compartan una identidad visual única.
+
+
+--->
+
+<style>
+
+#dcDialogOverlay{
+
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,.30);
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:99999;
+
+}
+
+#dcDialog{
+
+    width:420px;
+
+    background:white;
+
+    border-radius:10px;
+
+    border:1px solid #999;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+    overflow:hidden;
+
+}
+
+#dcDialogHeader{
+
+    background:rgb(140,230,255);
+
+    padding:10px;
+
+    font-weight:bold;
+
+}
+
+#dcDialogBody{
+
+    padding:18px;
+
+    line-height:1.5;
+
+}
+
+#dcDialogButtons{
+
+    padding:10px;
+
+    text-align:right;
+
+    border-top:1px solid #ddd;
+
+}
+
+#dcDialogButtons button{
+
+    min-width:80px;
+
+}
+
+#dcPromptInput{
+
+    width:100%;
+
+    margin-top:10px;
+
+    padding:6px;
+
+    box-sizing:border-box;
+
+}
+
+</style>
+
+<div id="dcDialogOverlay">
+
+    <div id="dcDialog">
+
+        <div id="dcDialogHeader"></div>
+
+        <div id="dcDialogBody"></div>
+
+        <div id="dcDialogButtons"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+  /*    SISTEMA DE TEMAS   */
+
+const DC_THEME_CLASSIC = 0;
+const DC_THEME_MODERN  = 1;
+
+/*
+ * Tema activo.
+ *
+ * Todas las funciones utilizan este valor automáticamente.
+ * El tema puede cambiarse dinámicamente llamando a:
+ *
+ *      dcSetTheme(DC_THEME_CLASSIC);
+ *      dcSetTheme(DC_THEME_MODERN);
+ */
+  
+let dcTheme = DC_THEME_CLASSIC;
+
+
+/*        border dcSetTheme()
+ 
+  Cambia el tema visual de la biblioteca.
+ 
+  IMPORTANTE
+  ----------
+  Esta función NO modifica la lógica de ningún diálogo.
+ 
+ Solamente cambia la clase CSS aplicada al contenedor principal.
+ 
+ */
+
+function dcSetTheme(theme){
+
+    dcTheme = theme;
+
+    const dialog = document.getElementById("dcDialog");
+
+    dialog.classList.remove(
+
+        "dcClassic",
+        "dcModern"
+
+    );
+
+    dialog.classList.add(
+
+        theme===DC_THEME_MODERN ?
+
+            "dcModern"
+
+            :
+
+            "dcClassic"
+
+    );
+
+}
+
+/* dcLibrary   */
+
+function dcCloseDialog(){
+
+    document.getElementById("dcDialogOverlay").style.display="none";
+
+}
+
+function dcAlert(message,title="Información"){
+
+    document.getElementById("dcDialogHeader").textContent = title;
+
+    document.getElementById("dcDialogBody").innerHTML =
+        message;
+
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button onclick="dcCloseDialog()">Aceptar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+        "flex";
+
+}
+
+function dcConfirm(message,callback,title="Confirmar"){
+
+    document.getElementById("dcDialogHeader").textContent = title;
+
+    document.getElementById("dcDialogBody").innerHTML =
+        message;
+
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button id="dcCancel">Cancelar</button>'+
+
+        '<button id="dcAccept">Aceptar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+        "flex";
+
+    document.getElementById("dcCancel").onclick =
+
+        function(){
+
+            dcCloseDialog();
+
+        };
+
+    document.getElementById("dcAccept").onclick =
+
+        function(){
+
+            dcCloseDialog();
+
+            callback();
+
+        };
+
+}
+
+function dcPrompt(message,defaultValue="",title="Entrada"){
+
+    return new Promise(function(resolve){
+
+        document.getElementById("dcDialogHeader").textContent =
+            title;
+
+        document.getElementById("dcDialogBody").innerHTML =
+
+            message +
+
+            '<br><input id="dcPromptInput" value="' +
+
+            defaultValue +
+
+            '">';
+
+        document.getElementById("dcDialogButtons").innerHTML =
+
+            '<button id="dcCancel">Cancelar</button>'+
+
+            '<button id="dcAccept">Aceptar</button>';
+
+        document.getElementById("dcDialogOverlay").style.display =
+            "flex";
+
+        document.getElementById("dcPromptInput").focus();
+
+        document.getElementById("dcCancel").onclick =
+
+            function(){
+
+                dcCloseDialog();
+
+                resolve(null);
+
+            };
+
+        document.getElementById("dcAccept").onclick =
+
+            function(){
+
+                const value =
+
+                    document.getElementById(
+                        "dcPromptInput"
+                    ).value;
+
+                dcCloseDialog();
+
+                resolve(value);
+
+            };
+
+    });
+
+}
+
+function dcDialog(title,html){
+
+    document.getElementById("dcDialogHeader").textContent = title;
+
+    document.getElementById("dcDialogBody").innerHTML = html;
+
+    document.getElementById("dcDialogButtons").innerHTML =
+
+        '<button onclick="dcCloseDialog()">Cerrar</button>';
+
+    document.getElementById("dcDialogOverlay").style.display =
+
+        "flex";
+
+}
+
+function dcList(title,items){
+
+    return new Promise(function(resolve){
+
+        let html = "";
+
+        items.forEach(function(item,index){
+
+            html +=
+
+                '<div class="dcListItem" '+
+                'style="padding:8px;border-bottom:1px solid #ddd;cursor:pointer;" '+
+                'onclick="dcListSelect('+index+')">'+
+
+                item.text+
+
+                '</div>';
+
+        });
+
+        window.dcListItems   = items;
+        window.dcListResolve = resolve;
+
+        dcDialog(title,html);
+
+    });
+
+}
+
+function dcListSelect(index){
+
+    const item = window.dcListItems[index];
+
+    dcCloseDialog();
+
+    if(window.dcListResolve){
+
+        window.dcListResolve(item.id);
+
+        window.dcListResolve = null;
+        window.dcListItems   = null;
+
+    }
+
+}
+
+  /*    Inicialización   */
+
+dcSetTheme(dcTheme);
+
+
+</script>

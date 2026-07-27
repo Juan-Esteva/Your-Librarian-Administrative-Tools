@@ -11,21 +11,35 @@ href="https://fonts.googleapis.com">
 href="https://fonts.gstatic.com"
 crossorigin>
 
-<link
-href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap"
+  <link
+href="https://fonts.googleapis.com/css2?
+family=Tangerine:wght@700&
+family=Manrope:wght@400;600;700;800&
+display=swap"
 rel="stylesheet">
+  
   
 <style>
 
 body{
 
-font-family:Arial,sans-serif;
+    font-family:Arial,sans-serif;
 
-background:white;
+    background:white;
 
-margin:0;
+    margin:0;
 
-padding:8px;
+    padding:8px;
+
+    height:calc(100vh - 16px);
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow:auto;
+
+    box-sizing:border-box;
 
 }
 
@@ -68,34 +82,6 @@ flex-shrink:0;
 
 }
 
-#title{
-
-font-family:
-'Tangerine',
-cursive;
-
-font-size:46px;
-
-font-weight:700;
-
-line-height:0.9;
-
-color:#222;
-
-}
-  
-#subtitle{
-
-font-size:13px;
-
-color:#444;
-
-letter-spacing:1px;
-
-margin-top:2px;
-
-}
-
 #titleBlock{
   display:flex;
   flex-direction:column;
@@ -112,9 +98,10 @@ margin-top:2px;
 
 #subtitle{
   text-align:center;
-  margin-top:0;
   font-size:13px;
   letter-spacing:1px;
+  color:#444;
+  margin-top:2px;
 }
 
 #toolbar{
@@ -164,13 +151,16 @@ margin-bottom:8px;
 
 #workArea{
 
-    height:70vh;
+    flex:1;
+
+    min-height:0;
 
     position:relative;
 
     overflow:hidden;
 
 }
+
 
 #idleLogo{
 
@@ -317,16 +307,17 @@ input[type="text"]{
 
 #footer{
 
-background:
-rgb(140,230,255);
+    background:rgb(140,230,255);
 
-border-radius:10px;
+    border-radius:10px;
 
-padding:10px;
+    padding:10px;
 
-margin-top:8px;
+    margin-top:8px;
 
-font-weight:bold;
+    font-weight:bold;
+
+    flex-shrink:0;
 
 }
 
@@ -533,6 +524,7 @@ Listo
 
 <?!= include('dcCore'); ?>
 <?!= include('dcLibrary'); ?>
+<?!= include('dcFileManager'); ?>
 
 <script>
 
@@ -566,13 +558,17 @@ const modules = {
 
     show : function(){
 
-        document.getElementById("contextToolbar").innerHTML =
+    document.getElementById("contextToolbar").innerHTML =
 
-            '<button onclick="showHelpEditor()">Editor de Ayuda</button>' +
+        '<button onclick="showHelpEditor()">Editor de Ayuda</button>' +
 
-            '<button onclick="activateModule(\'news\');setStatus(\'Editor de Novedades\');">Editor de Novedades</button>';
+        '<button onclick="activateModule(\'news\');setStatus(\'Editor de Novedades\');">Editor de Novedades</button>' +
 
-        document.getElementById("idleLogo").style.display = "flex";
+        '<span style="margin-left:auto"></span>' +
+
+        '<button onclick="TestFileManager()">Test File Manager</button>';
+
+    document.getElementById("idleLogo").style.display = "flex";
 
     }
 
@@ -757,6 +753,28 @@ function trace(module,functionName,message){
             functionName,
             message
         );
+
+}
+
+async function TestFileManager(){
+
+    const fm = new dcFileManager();
+
+    const result = await fm.Open({
+
+        provider: new dcDriveProvider(),
+
+        brand : {
+
+            title : "ylat"
+
+        },
+
+        caption : "Prueba del File Manager"
+
+    });
+
+    console.log(result);
 
 }
 

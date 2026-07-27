@@ -1,0 +1,566 @@
+<style>
+
+.dcfmOverlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.30);
+
+    z-index:100000;
+
+}
+
+.dcfmWindow{
+
+    width:900px;
+
+    height:650px;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    display:flex;
+
+    flex-direction:column;
+
+    background:rgba(70,185,220,.58);
+
+    backdrop-filter:blur(16px);
+
+    -webkit-backdrop-filter:blur(16px);
+
+    border:1px solid rgba(255,255,255,.18);
+
+    box-shadow:0 18px 45px rgba(0,0,0,.30);
+
+}
+
+</style>
+
+<div id="dcfmOverlay" class="dcfmOverlay">
+
+    <div id="dcfmWindow" class="dcfmWindow">
+
+    </div>
+
+</div>
+
+<script>
+
+/*
+
+                dcFileManager
+
+El dcFileManager es un explorador de recursos completamente independiente de
+la aplicación que lo utiliza.
+
+No conoce configuraciones, variables globales ni estructuras propias de YLAT,
+Vniversitas u otros proyectos.
+
+La carpeta inicial de navegación (ROOT_FOLDER) es responsabilidad exclusiva
+de la aplicación anfitriona y debe suministrarse al abrir el componente.
+
+Ejemplo:
+
+const fm = new dcFileManager();
+
+await fm.Open({
+
+    provider   : new dcDriveProvider(),
+
+    rootFolder : ROOT_FOLDER
+
+});
+
+De esta forma el mismo componente puede reutilizarse en cualquier proyecto
+simplemente proporcionando un proveedor y una carpeta raíz diferente.
+
+*/
+
+class dcFileManager{
+
+    constructor(){
+
+        this.config        = {};
+        this.provider      = null;
+        this.folderStack   = [];
+        this.currentFolder = null;
+        this.currentItems  = [];
+        this.selectedItem  = null;
+        this.resolve       = null;
+
+    }
+
+    Open(cfg){
+
+        const self = this;
+
+        return new Promise(function(resolve){
+
+            self.config = cfg || {};
+
+            self.provider = self.config.provider || null;
+
+            self.resolve = resolve;
+
+            self.folderStack = [];
+
+            self.currentFolder =
+
+                self.config.rootFolder || null;
+
+            self.currentItems = [];
+
+            self.Render();
+
+            document
+                .getElementById("dcfmOverlay")
+                .style.display = "flex";
+
+        });
+
+    }
+
+    Render(){
+
+    const w = document.getElementById("dcfmWindow");
+
+    w.innerHTML = `
+
+<div style="display:flex;flex-direction:column;height:100%">
+
+    <!-- Cabecera -->
+
+    <div style="padding:22px 24px 10px 24px">
+
+        <div
+            style="
+                font-family:'Manrope',sans-serif;
+                font-size:84px;
+                font-weight:800;
+                letter-spacing:.5px;
+                color:white;
+                line-height:1;
+            ">
+
+            ${this.config.brand?.title || ""}
+
+        </div>
+
+        <div
+            style="
+                font-size:14px;
+                color:rgba(255,255,255,.90);
+                margin-top:6px;
+            ">
+
+            ${this.config.caption || ""}
+
+        </div>
+
+    </div>
+
+    <!-- Toolbar -->
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 24px;
+        ">
+
+        <button id="dcfmBackButton">←</button>
+
+        <button id="dcfmUpButton">↑</button>
+
+    </div>
+
+    <!-- Ruta -->
+
+    <div style="padding:0 24px 10px 24px">
+
+        <div
+            id="dcfmPath"
+            style="
+                height:28px;
+                background:rgba(255,255,255,.25);
+                border:1px solid rgba(255,255,255,.35);
+                border-radius:8px;
+                padding:4px 10px;
+                color:white;
+                box-sizing:border-box;
+            ">
+
+            (Sin carpeta seleccionada)
+
+        </div>
+
+    </div>
+
+    <!-- Área de archivos -->
+
+    <div
+        style="
+            flex:1;
+            margin:0 24px;
+            background:rgba(255,255,255,.18);
+            border:1px solid rgba(255,255,255,.25);
+            border-radius:12px;
+            overflow:auto;
+        ">
+
+        <div
+            id="dcfmFiles"
+            style="
+                padding:12px;
+                color:white;
+            ">
+
+            No hay elementos para mostrar.
+
+        </div>
+
+    </div>
+
+    <!-- Barra de estado -->
+
+    <div
+        id="dcfmStatus"
+        style="
+            padding:10px 24px;
+            color:white;
+            font-size:13px;
+        ">
+
+        Listo.
+
+    </div>
+
+    <!-- Botones -->
+
+    <div
+        style="
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+            padding:0 24px 20px 24px;
+        ">
+
+        <button id="dcfmCancelButton">
+
+            Cancelar
+
+        </button>
+
+        <button id="dcfmAcceptButton">
+
+            Aceptar
+
+        </button>
+
+    </div>
+
+</div>
+
+`;
+
+    document.getElementById("dcfmCancelButton").onclick =
+        () => this.Close(null);
+
+    document.getElementById("dcfmAcceptButton").onclick =
+        () => this.Close(null);
+
+    this.SetCurrentFolder(this.currentFolder);
+
+    }
+
+    SetCurrentFolder(folder){
+
+    this.currentFolder = folder || null;
+
+    this.selectedItem = null;
+
+    this.LoadFolder(this.currentFolder);
+
+    }
+
+    SelectItem(item,index){
+
+    this.selectedItem = item;
+
+    for(let i=0;i<this.currentItems.length;i++){
+
+        const row =
+            document.getElementById(`dcfmItem${i}`);
+
+        if(row){
+
+            row.style.background = "";
+
+        }
+
+    }
+
+    const row =
+        document.getElementById(`dcfmItem${index}`);
+
+    if(row){
+
+        row.style.background = "rgba(255,255,255,.25)";
+
+    }
+
+    this.RefreshButtons();
+
+    }
+
+    async LoadFolder(folder){
+
+    this.currentItems = [];
+
+    if(this.provider){
+
+        if(typeof this.provider.List === "function"){
+
+            const items = await this.provider.List(folder);
+
+            if(Array.isArray(items))
+
+                this.currentItems = items;
+
+        }
+
+    }
+
+    this.Refresh();
+
+    }
+
+    RefreshPath(){
+
+    const path = document.getElementById("dcfmPath");
+
+    if(!path) return;
+
+    if(!this.currentFolder){
+
+        path.innerText = "(Sin carpeta seleccionada)";
+
+        return;
+
+    }
+
+    path.innerText = this.currentFolder.name || this.currentFolder.id;
+
+    }
+
+    RefreshFiles(){
+
+    const div = document.getElementById("dcfmFiles");
+
+    if(!div) return;
+
+    if(!this.currentItems.length){
+
+        div.innerHTML = "No hay elementos para mostrar.";
+
+        return;
+
+    }
+
+    let html = "";
+
+    this.currentItems.forEach((item,index)=>{
+
+        const icon =
+            item.type=="folder"
+                ? "📁"
+                : "📄";
+
+        const selected =
+            (this.selectedItem && this.selectedItem.id==item.id)
+                ? "background:rgba(255,255,255,.25);"
+                : "";
+
+        html += `
+            <div
+                id="dcfmItem${index}"
+                style="
+                    padding:3px 8px;
+                    cursor:pointer;
+                    border-radius:4px;
+                    user-select:none;
+                    ${selected}
+                ">
+                ${icon} ${item.name}
+            </div>
+        `;
+
+    });
+
+    div.innerHTML = html;
+
+    this.currentItems.forEach((item,index)=>{
+
+        const row =
+            document.getElementById(`dcfmItem${index}`);
+
+        row.onclick = ()=>{
+
+            this.SelectItem(item,index);
+
+        };
+
+        row.ondblclick = ()=>{
+
+          if(item.type=="folder"){
+      
+              this.folderStack.push(this.currentFolder);
+      
+              this.SetCurrentFolder(item);
+      
+              return;
+      
+          }
+      
+          this.SelectItem(item,index);
+      
+          this.Close(item);
+      
+      };
+
+    });
+
+    }
+
+    RefreshButtons(){
+
+    const back   = document.getElementById("dcfmBackButton");
+    const up     = document.getElementById("dcfmUpButton");
+    const accept = document.getElementById("dcfmAcceptButton");
+
+    if(back){
+
+        back.disabled = (this.folderStack.length==0);
+
+        back.onclick = ()=>{
+
+            if(this.folderStack.length==0)
+                return;
+
+            const folder = this.folderStack.pop();
+
+            this.SetCurrentFolder(folder);
+
+        };
+
+    }
+
+    if(up){
+
+        up.disabled = !(this.provider &&
+                        typeof this.provider.GetParent=="function" &&
+                        this.currentFolder);
+
+        up.onclick = async ()=>{
+
+            if(!this.currentFolder)
+                return;
+
+            if(!(this.provider &&
+                 typeof this.provider.GetParent=="function"))
+                return;
+
+            const parent =
+                await this.provider.GetParent(this.currentFolder);
+
+            this.SetCurrentFolder(parent);
+
+        };
+
+    }
+
+    if(accept){
+
+        accept.disabled = (this.selectedItem==null);
+
+        accept.onclick = ()=>{
+
+            this.Close(this.selectedItem);
+
+        };
+
+    }
+
+    }
+
+    Close(result){
+
+        document
+            .getElementById("dcfmOverlay")
+            .style.display = "none";
+
+        if(this.resolve)
+
+            this.resolve(result);
+
+    }
+
+    Refresh(){
+
+    this.RefreshPath();
+
+    this.RefreshFiles();
+
+    this.RefreshButtons();
+
+    }
+
+}
+
+class dcDriveProvider{
+
+    async List(folder){
+
+        return new Promise(function(resolve,reject){
+
+            google.script.run
+
+                .withSuccessHandler(function(items){
+
+                    resolve(items || []);
+
+                })
+
+                .withFailureHandler(function(err){
+
+                    console.error(err);
+
+                    reject(err);
+
+                })
+
+                .DCFMList(
+
+                    folder ? folder.id : null
+
+                );
+
+        });
+
+    }
+
+}
+
+</script>
+

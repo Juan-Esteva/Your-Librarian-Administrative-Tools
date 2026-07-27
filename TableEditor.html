@@ -474,7 +474,10 @@ function deleteRow(index){
 
         "¿Eliminar esta fila?",
 
-        function(){
+        function(ok){
+
+    if(!ok) return;
+
 
             tableData.splice(index,1);
 

@@ -121,23 +121,14 @@ class dcWorkspace{
 
     constructor(){
 
-        this.range = null;
-        this.activeElement = null;
+        this.activeElement  = null;
+        this.insertionPoint = null;
 
     }
 
     SaveContext(){
 
         this.activeElement = document.activeElement;
-
-        const sel = window.getSelection();
-
-        if(sel && sel.rangeCount){
-
-            this.range =
-                sel.getRangeAt(0).cloneRange();
-
-        }
 
     }
 
@@ -149,20 +140,184 @@ class dcWorkspace{
 
         }
 
-        if(this.range){
+    }
 
-            const sel = window.getSelection();
+    SetInsertionPoint(){
 
-            sel.removeAllRanges();
+        this.ClearInsertionPoint();
 
-            sel.addRange(this.range);
+        const sel = window.getSelection();
+
+        if(!sel || !sel.rangeCount)
+            return false;
+
+        const range = sel.getRangeAt(0).cloneRange();
+
+        const marker =
+            document.createComment("InsertionPoint");
+
+        range.insertNode(marker);
+
+        range.setStartAfter(marker);
+        range.collapse(true);
+
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        this.insertionPoint = marker;
+
+        return true;
+
+    }
+
+    ClearInsertionPoint(){
+
+        if(
+            this.insertionPoint &&
+            this.insertionPoint.parentNode
+        ){
+
+            this.insertionPoint.parentNode.removeChild(
+                this.insertionPoint
+            );
 
         }
+
+        this.insertionPoint = null;
+
+    }
+
+    Begin(){
+
+        this.SaveContext();
+    
+        this.SetInsertionPoint();
+    
+        return this;
+    
+    }
+    
+    Restore(){
+    
+        this.RestoreContext();
+    
+        return this;
+    
+    }
+
+    InsertHTML(html){
+
+        if(!this.insertionPoint)
+            return false;
+
+        const container =
+            document.createElement("div");
+
+        container.innerHTML = html;
+
+        const fragment =
+            document.createDocumentFragment();
+
+        while(container.firstChild){
+
+            fragment.appendChild(
+                container.firstChild
+            );
+
+        }
+
+        this.insertionPoint.parentNode.insertBefore(
+
+            fragment,
+
+            this.insertionPoint
+
+        );
+
+        this.ClearInsertionPoint();
+
+        return true;
+
+    }
+
+    GetFileHTML(file){
+
+        if(!file)
+            return "";
+
+        if(
+            file.mime &&
+            file.mime.startsWith("image/")
+        ){
+
+            return '<img '+
+                    'src="'+file.imageUrl+'" '+
+                    'alt="'+file.name+'" '+
+                    'title="'+file.name+'" '+
+                    'style="'+
+                        'display:block;'+
+                        'margin:12px auto;'+
+                        'max-width:100%;'+
+                        'height:auto;'+
+                    '"><br><br>';
+
+        }
+
+        let icon="[FILE] ";
+
+        if(file.mime){
+
+            if(file.mime.startsWith("audio/"))
+
+                icon="[AUDIO] ";
+
+            else if(file.mime.startsWith("video/"))
+
+                icon="[VIDEO] ";
+
+            else
+
+                icon="[DOC] ";
+
+        }
+
+        return '<a '+
+                'href="'+file.url+'" '+
+                'target="_blank" '+
+                'title="'+file.name+'">'+
+
+                icon+" "+file.name+
+
+               '</a>';
+
+    }
+
+    InsertFile(file){
+
+        return this.InsertHTML(
+
+            this.GetFileHTML(file)
+
+        );
+
+    }
+
+    InsertLink(url,text){
+
+        return this.InsertHTML(
+
+            '<a href="'+url+'" target="_blank">'+
+
+            (text || url)+
+
+            '</a>'
+
+        );
 
     }
 
 }
-
+  
 /*
     Próximas responsabilidades previstas
 

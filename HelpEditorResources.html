@@ -5,8 +5,12 @@ async function helpInsertResource(){
     window.helpWorkspace =
     new dcWorkspace();
 
-    window.helpWorkspace.SaveContext();
+   //  window.helpWorkspace.SaveContext();
 
+    window.helpWorkspace.SaveContext();
+    window.helpWorkspace.SetInsertionPoint();
+
+  // 
     const type = await dcList(
 
         "Insertar recurso",
@@ -212,10 +216,20 @@ function FMSelect(index){
 
         helpFocus();
 
+      /*
+
         window.helpWorkspace.RestoreContext();
 
         helpInsertHTML(html);
-            
+
+
+        */
+
+      window.helpWorkspace.RestoreContext();
+
+      window.helpWorkspace.InsertHTML(html);
+
+      
 
     },0);
 }

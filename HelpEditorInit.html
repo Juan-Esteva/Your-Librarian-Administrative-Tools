@@ -8,34 +8,62 @@
 
     document.getElementById("contextToolbar").innerHTML =
 
-        '<div style="display:flex;align-items:center;width:100%;">'+
+'<div class="contextToolbar">'+
 
-            '<div style="display:flex;gap:8px;">'+
+    '<div class="contextGroup">'+
 
-                '<button onclick="insertTemplate()">Plantilla</button>'+
-      
-'<button onclick="editTemplate()">Editar plantilla</button>'+
-      
-'<button onclick="restoreTemplate()">Restaurar plantilla</button>'+
+        '<div class="contextGroupTitle">'+
+            'Plantilla'+
+        '</div>'+
 
-'<span style="display:inline-block;width:1px;height:24px;background:#bdbdbd;margin:0 10px;vertical-align:middle;"></span>'+
+        '<div style="display:flex;gap:6px;flex-wrap:nowrap;">'+
 
-'<button onclick="clearHelp()">Borrar</button>'+
+            '<button onclick="insertTemplate()">'+
+                'Insertar'+
+            '</button>'+
 
-            '</div>'+
+            '<button onclick="editTemplate()">'+
+                'Editar'+
+            '</button>'+
 
-            '<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'+
+            '<button onclick="restoreTemplate()">'+
+                'Restaurar'+
+            '</button>'+
 
-                '<span>🌐</span>'+
+        '</div>'+
 
-                '<select id="languageSelector" onchange="changeLanguage(this.value)" style="width:80px;"></select>'+
+    '</div>'+
 
-                '<button onclick="saveHelp()">Guardar</button>'+
+    '<div class="contextSpacer"></div>'+
 
-            '</div>'+
+    '<div class="contextGroup">'+
 
-        '</div>';
+        '<div class="contextGroupTitle">'+
+            'Contenido'+
+        '</div>'+
 
+        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">'+
+  
+      '<button onclick="clearHelp()">'+
+          'Borrar'+
+      '</button>'+
+  
+      '<button onclick="saveHelp()">'+
+          'Guardar'+
+      '</button>'+
+  
+      '<span>🌐</span>'+
+  
+      '<select id="languageSelector" '+
+              'onchange="changeLanguage(this.value)" '+
+              'style="width:80px;">'+
+      '</select>'+
+  
+      '</div>'+
+
+    '</div>'+
+
+'</div>';
 
     /*   Barra del editor   */
 
@@ -114,6 +142,13 @@
 
         });
 
+editor.addEventListener(
+
+    "click",
+
+    helpEditorClick
+
+);
         editor.addEventListener("keydown",function(ev){
 
             if(ev.key!=="Backspace")

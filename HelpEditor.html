@@ -1,16 +1,29 @@
 <!-- Ultimo guardado : 202607131950 -->
 
-<div id="helpContainer" style="display:none;height:100%;">
+<div id="helpContainer"
+     style="
+         display:none;
+         height:100%;
+     ">
 
 <style>
 
 #helpLayout{
+
     display:flex;
+
     height:100%;
+
     border:1px solid #ccc;
+
     border-radius:10px;
+
     overflow:hidden;
+
     background:white;
+
+    box-sizing:border-box;
+
 }
 
 #helpCommands{
@@ -160,6 +173,7 @@
 
 }
 
+ 
 #helpToolbar button{
 
     display:inline-flex;
@@ -223,6 +237,66 @@
 
 }
 
+.contextToolbar{
+
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+
+    width:100%;
+
+}
+
+.contextGroup{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    justify-content:flex-start;
+
+    padding:8px;
+
+    border:1px solid #b8dff0;
+
+    border-radius:8px;
+
+    background:#f8fcff;
+
+    white-space:nowrap;
+
+    flex-shrink:0;
+
+}
+
+.contextGroupTitle{
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    color:#4a6b7a;
+
+    margin-bottom:6px;
+
+    padding-left:2px;
+
+}
+
+.contextGroup button{
+
+    min-width:90px;
+
+}
+
+.contextSpacer{
+
+    flex:1;
+
+}
+
 @keyframes blink{
 
     50%{
@@ -279,6 +353,61 @@
 
         <div id="helpDocument" contenteditable="true"></div>
 
+        <div
+    id="helpImageSizer"
+    style="
+        display:none;
+        margin-top:8px;
+        padding:8px;
+        background:#eef7fc;
+        border:1px solid #b8dceb;
+        border-radius:6px;
+        text-align:center;
+    ">
+
+    <div
+        style="
+            font-weight:bold;
+            margin-bottom:6px;
+        ">
+
+        Tamaño de la imagen
+
+    </div>
+
+    <div
+        style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:10px;
+        ">
+
+        <input
+            id="helpImageSlider"
+            type="range"
+            min="10"
+            max="100"
+            value="100"
+            oninput="helpUpdateImageSize()"
+            style="width:50%;">
+
+        <span
+            id="helpImageValue"
+            style="
+                width:50px;
+                text-align:left;
+                font-weight:bold;
+            ">
+
+            100%
+
+        </span>
+
+    </div>
+
+        </div>
+
     </div>
 
 </div>
@@ -303,7 +432,10 @@ function clearHelp(){
 
             "¿Desea borrar completamente la plantilla?",
 
-            function(){
+            function(ok){
+
+    if(!ok) return;
+
 
                 document.getElementById("helpDocument").innerHTML="";
 
@@ -333,7 +465,10 @@ function clearHelp(){
 
         '"?',
 
-        function(){
+        function(ok){
+
+    if(!ok) return;
+
 
             document.getElementById("helpDocument").innerHTML="";
 
@@ -639,10 +774,6 @@ function insertTemplate(){
         .YLGetTemplate(currentLanguage);
 
 }
-
-
-
-
   
 function restoreTemplate(){
 
@@ -650,7 +781,10 @@ function restoreTemplate(){
 
         "¿Desea restaurar la plantilla original?\n\nSe perderán todas las modificaciones realizadas a la plantilla actual.",
 
-        function(){
+        function(ok){
+
+    if(!ok) return;
+
 
             setStatus("Restaurando plantilla...",true);
 
@@ -687,5 +821,147 @@ function restoreTemplate(){
     );
 
 }
+
+function helpEditorClick(ev){
+
+
+    if(ev.target.tagName==="IMG"){
+
+        if(helpCurrentImage)
+
+            helpCurrentImage.style.outline = "none";
+
+        helpCurrentImage = ev.target;
+
+        helpCurrentImage.style.outline =
+            "2px solid #3b82f6";
+
+        helpShowImageSizer(helpCurrentImage);
+
+    }
+    else{
+
+        if(helpCurrentImage){
+
+            helpCurrentImage.style.outline = "none";
+
+            helpCurrentImage = null;
+
+        }
+
+        helpHideImageSizer();
+
+    }
+
+}
+
+function helpShowImageSizer(img){
+
+    const sizer =
+        document.getElementById("helpImageSizer");
+
+    const slider =
+        document.getElementById("helpImageSlider");
+
+    const value =
+        document.getElementById("helpImageValue");
+
+    let percent = 100;
+
+    if(img.style.width &&
+       img.style.width.endsWith("%")){
+
+        percent =
+            parseInt(img.style.width,10);
+
+    }
+
+    slider.value = percent;
+
+    value.textContent =
+        percent + "%";
+
+    sizer.style.display =
+        "block";
+
+    document.addEventListener(
+    "keydown",
+    helpImageSizerKeyDown
+);
+
+}
+
+function helpHideImageSizer(){
+
+    document
+        .getElementById("helpImageSizer")
+        .style.display = "none";
+
+    document.removeEventListener(
+        "keydown",
+        helpImageSizerKeyDown
+    );
+
+}
+
+function helpUpdateImageSize(){
+
+    if(!helpCurrentImage)
+        return;
+
+    const slider =
+        document.getElementById("helpImageSlider");
+
+    const value =
+        document.getElementById("helpImageValue");
+
+    const percent =
+        parseInt(slider.value,10);
+
+    value.textContent =
+        percent + "%";
+
+    helpCurrentImage.style.width =
+        percent + "%";
+
+    helpCurrentImage.style.height =
+        "auto";
+
+}
+
+  function helpImageSizerKeyDown(ev){
+
+    if(ev.key !== "Delete" &&
+   ev.key !== "Backspace")
+    return;
+
+    if(!helpCurrentImage)
+        return;
+
+    ev.preventDefault();
+
+    dcConfirm(
+
+        "¿Eliminar la imagen seleccionada?",
+
+        function(ok){
+
+    if(!ok) return;
+
+
+            helpCurrentImage.remove();
+
+            helpCurrentImage = null;
+
+            helpHideImageSizer();
+
+        },
+
+        "Editor de Ayuda"
+
+    );
+
+  }
+
 
 </script>

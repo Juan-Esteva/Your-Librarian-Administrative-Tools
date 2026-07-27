@@ -269,3 +269,63 @@ function include(filename) {
     .createHtmlOutputFromFile(filename)
     .getContent();
 }
+
+/*      dcFM     B*/
+
+function DCFMList(folderId){
+
+    LoadConfig();
+
+    const rootId = GetConfig("publicFolderId");
+
+    const folder = folderId
+        ? DriveApp.getFolderById(folderId)
+        : DriveApp.getFolderById(rootId);
+
+    const items = [];
+
+    const folders = folder.getFolders();
+
+    while(folders.hasNext()){
+
+        const f = folders.next();
+
+        items.push({
+
+            id   : f.getId(),
+            name : f.getName(),
+            type : "folder"
+
+        });
+
+    }
+
+    const files = folder.getFiles();
+
+    while(files.hasNext()){
+
+        const f = files.next();
+
+        items.push({
+
+            id   : f.getId(),
+            name : f.getName(),
+            type : "file"
+
+        });
+
+    }
+
+    items.sort(function(a,b){
+
+        if(a.type != b.type)
+
+            return a.type == "folder" ? -1 : 1;
+
+        return a.name.localeCompare(b.name);
+
+    });
+
+    return items;
+
+}
